@@ -1,5 +1,6 @@
 package at.creadoo.homematic.jhid;
 
+import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.impl.LinkBaseImpl;
 import at.creadoo.homematic.packets.HomeMaticPacket;
 
@@ -30,6 +31,14 @@ public class HidLink extends LinkBaseImpl implements HidServicesListener {
 	
 	private HashMap<String, HidConnection> connectionsBySerial = new HashMap<String, HidConnection>();
 
+    public HidLink() {
+    	super();
+	}
+    
+    public HidLink(final ILinkListener listener) {
+    	super(listener);
+	}
+    
 	@Override
 	public String getName() {
 		return this.getClass().getSimpleName();

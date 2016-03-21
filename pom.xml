@@ -304,5 +304,32 @@
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<id>run-console</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>compile-reports</id>
+								<phase>test</phase>
+								<goals>
+									<goal>java</goal>
+								</goals>
+								<configuration>
+									<classpathScope>test</classpathScope>
+									<includeProjectDependencies>true</includeProjectDependencies>
+									<includePluginDependencies>true</includePluginDependencies>
+									<mainClass>at.creadoo.homematic.console.Client</mainClass>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		
 	</profiles>
 </project>
