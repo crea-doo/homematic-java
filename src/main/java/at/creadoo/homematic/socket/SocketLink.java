@@ -28,6 +28,8 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	 */
 	public static final Integer DEFAULT_TIMEOUT = 5000;
 
+	public static final Integer DEFAULT_KEEP_ALIVE_INTERVAL = 25 * 1000;
+
 	/**
 	 * Line end marker
 	 */
@@ -57,10 +59,22 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	private int addressDefault;
 
 	private int address;
-	
-	private Long startUpTime = 0L;
-	
-	private Long lastKeepAliveResponse = 0L;
+
+	/**
+	 * The keep alive interval defines the period after that a keep alive packet
+	 * is sent
+	 */
+	public int keepAliveInterval = DEFAULT_KEEP_ALIVE_INTERVAL;
+
+	/**
+	 * Holds the startup time value read from the gateway
+	 */
+	private long startUpTime = 0L;
+
+	/**
+	 * Holds the timestamp of the last received response to a keep alive packet
+	 */
+	private long lastKeepAliveResponse = 0L;
 
 	private final Timer timer = new Timer();
 
@@ -133,7 +147,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		};
 		
 		// scheduling the task at interval
-		timer.schedule(keepAlive, 10 * 1000, 10 * 1000);
+		timer.schedule(keepAlive, keepAliveInterval, keepAliveInterval);
 
 		initCommandQueue();
 		
@@ -378,8 +392,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     
     @Override
 	public boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
+    	packet.setSenderAddress(address);
+    	packet.setMessageCounter(getNextMessageCounter(packet.getDestinationAddress()));
+    	
 		final String data = "S" + formatHexTime(System.currentTimeMillis()) + ",00,00000000,01," + formatHexTime(System.currentTimeMillis() - startUpTime) + "," + Util.toHex(packet.getData()).substring(2);
-		return send(data);
+
+		final boolean result = send(data);
+		if (!result) {
+			decreaseMessageCounter(packet.getDestinationAddress());
+		}
+		return result;
 	}
 	
 	protected boolean send(final String data) throws SocketException, IOException {
@@ -483,6 +505,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		return address;
 	}
 	
+	public int getKeepAliveInterval() {
+		return keepAliveInterval;
+	}
+
+	public void setKeepAliveInterval(final int keepAliveInterval) {
+		if (keepAliveInterval > 0 && keepAliveInterval < 30) {
+			this.keepAliveInterval = keepAliveInterval;
+		}
+	}
+
 	public void testAES(final String data) {
 		log.debug("testAES: Input = '" + data + "'");
 		
