@@ -3,11 +3,17 @@ package at.creadoo.homematic.console;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+import at.creadoo.homematic.HomeMaticMessageType;
+import at.creadoo.homematic.HomeMaticStatus;
 import at.creadoo.homematic.ILink;
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.jhid.HidLink;
 import at.creadoo.homematic.packets.HomeMaticPacket;
+import at.creadoo.homematic.packets.HomeMaticPacketSet;
 import at.creadoo.homematic.socket.SocketLink;
 
 public class Client {
@@ -35,16 +41,36 @@ public class Client {
 				}
 				
 				try {
-					if (line.equalsIgnoreCase(Command.HELP.getValue())) {
+					if (Command.HELP.getValues().contains(line.trim().toLowerCase())) {
 						printUsage();
-					} else if (line.equalsIgnoreCase(Command.EXIT.getValue())) {
+					} else if (Command.EXIT.getValues().contains(line.trim().toLowerCase())) {
+						if (currentLink != null && currentLink.isConnected()) {
+							currentLink.close();
+						}
+						currentLink = null;
 						break;
-					} else if (line.equalsIgnoreCase(Command.CLOSE.getValue())) {
-						currentLink.close();
-					} else if (line.equalsIgnoreCase(Command.CONNECT_HID.getValue())) {
+					} else if (Command.CLOSE.getValues().contains(line.trim().toLowerCase())) {
+						if (currentLink != null && currentLink.isConnected()) {
+							currentLink.close();
+						}
+					} else if (Command.SEND.getValues().contains(line.trim().toLowerCase())) {
+						if (currentLink != null && currentLink.isConnected()) {
+							currentLink.send(new HomeMaticPacketSet(0x26, 0x31e00f, 0x35366f, HomeMaticStatus.ON));
+						} else {
+							System.out.println("Link not connected");
+						}
+					} else if (Command.CONNECT_HID.getValues().contains(line.trim().toLowerCase())) {
 						currentLink = setupHIDLink();
-					} else if (line.equalsIgnoreCase(Command.CONNECT_SOCKET.getValue())) {
+						currentLink.start();
+						if (currentLink.isConnected()) {
+							System.out.println("Link not connected");
+						}
+					} else if (Command.CONNECT_SOCKET.getValues().contains(line.trim().toLowerCase())) {
 						currentLink = setupSocketLink();
+						currentLink.start();
+						if (currentLink.isConnected()) {
+							System.out.println("Link not connected");
+						}
 					} else {
 						System.out.println("Command not found: '" + line + "'");
 					}
@@ -80,7 +106,6 @@ public class Client {
 			}
 		};
     }
-    
 
     private static ILink setupHIDLink() {
 		try {
@@ -94,7 +119,7 @@ public class Client {
 
     private static ILink setupSocketLink() {
 		try {
-			final InetSocketAddress socketRemoteIp = new InetSocketAddress("192.168.0.17", 1000);
+			final InetSocketAddress socketRemoteIp = new InetSocketAddress("10.0.1.111", 1000);
 			return new SocketLink(socketRemoteIp, linkListener);
 		} catch (Throwable ex) {
 			System.out.println("[ERROR] " + ex.getMessage());
@@ -109,9 +134,15 @@ public class Client {
     private static void printUsage() {
     	System.out.println("Available commands:");
     	
-    	for (Command command : Command.values()) {
-        	System.out.println("   " + command.getValue());
+    	final List<String> commands = new ArrayList<String>();
+    	for (final Command command : Command.values()) {
+    		commands.addAll(command.getValues());
     	}
+    	Collections.sort(commands);
+    	
+    	for (String commandValue : commands) {
+			System.out.println("   " + commandValue.trim());
+		}
     	
     	System.out.println("");
     }
@@ -128,17 +159,20 @@ public class Client {
     	HELP("help"),
     	EXIT("exit"),
     	CLOSE("close"),
-    	CONNECT_HID("connect-hid"),
-    	CONNECT_SOCKET("connect-socket");
+    	SEND("send"),
+    	CONNECT_HID("connect-hid", "hid"),
+    	CONNECT_SOCKET("connect-socket", "socket");
     	
-    	private String value;
+    	private final List<String> values = new ArrayList<String>();
 
-    	private Command(final String value) {
-    		this.value = value;
+    	private Command(final String ... values) {
+    		for (String value : values) {
+    			this.values.add(value.toLowerCase().trim());
+    		}
     	}
 
-    	public String getValue() {
-    		return this.value;
+    	public List<String> getValues() {
+    		return Collections.unmodifiableList(this.values);
     	}
     }
 }

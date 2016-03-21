@@ -34,12 +34,12 @@ public class DummySocketLink extends SocketLink {
 	}
 
 	@Override
-	public Boolean isReconnectSupported() {
+	public boolean isReconnectSupported() {
 		return true;
 	}
 
 	@Override
-	protected Boolean startLink(final Boolean reconnecting) {
+	protected boolean startLink(final Boolean reconnecting) {
 		if (this.getAESEnabled()) {
 			new Timer().schedule(new TimerTask() {
 				@Override
@@ -53,12 +53,12 @@ public class DummySocketLink extends SocketLink {
 	}
 
 	@Override
-	protected Boolean closeLink() {
+	protected boolean closeLink() {
 		return true;
 	}
 
 	@Override
-	protected Boolean send(final byte[] data) throws SocketException, IOException {
+	protected boolean send(final byte[] data) throws SocketException, IOException {
         if (getAESEnabled() && !this.aesInitialized) {
         	char c = (char) data[0];
         	if (c == 'V') {

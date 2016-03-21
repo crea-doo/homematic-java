@@ -45,12 +45,12 @@ public class HidLink extends LinkBaseImpl implements HidServicesListener {
 	}
 
 	@Override
-	public Boolean isReconnectSupported() {
+	public boolean isReconnectSupported() {
 		return true;
 	}
 
 	@Override
-	protected Boolean startLink(final Boolean reconnecting) {
+	protected boolean startLink(final Boolean reconnecting) {
 		Boolean result = true;
 		
 		log.debug("Initializing... ");
@@ -103,7 +103,7 @@ public class HidLink extends LinkBaseImpl implements HidServicesListener {
 	}
 
 	@Override
-	protected Boolean closeLink() {
+	protected boolean closeLink() {
 		Boolean result = true;
 		for (Map.Entry<String, HidConnection> entry : this.connectionsBySerial.entrySet()) {
 			if (!entry.getValue().close()) {
@@ -124,7 +124,7 @@ public class HidLink extends LinkBaseImpl implements HidServicesListener {
 	}
     
     @Override
-	public Boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
+	public boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
 		boolean result = false;
     	for (String serial: connectionsBySerial.keySet()) {
     		final HidConnection connection = connectionsBySerial.get(serial);
