@@ -5,6 +5,8 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.crypto.Cipher;
 
@@ -48,20 +50,22 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	
 	private SocketListener listener;
 
-	private Integer HEARTBEAT = 60;
+	private int firmwareVersion;
+
+	private String serial;
+
+	private int addressDefault;
+
+	private int address;
 	
-	private final String SCHEDULER_JOB_NAME = this.getClass().getSimpleName() + "-Heartbeat";
-    
-    private int firmwareVersion;
-    
-    private String serial;
-    
-    private int addressDefault;
-    
-    private int address;
-    
-    protected byte[] aesLanKey = null;
-    
+	private Long startUpTime = 0L;
+	
+	private Long lastKeepAliveResponse = 0L;
+
+	private final Timer timer = new Timer();
+
+	protected byte[] aesLanKey = null;
+
     /**
      * Hexadecimal representation of the initialization vector sent from the gateway
      */
@@ -99,12 +103,12 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	}
 
 	@Override
-	public Boolean isReconnectSupported() {
+	public boolean isReconnectSupported() {
 		return true;
 	}
 
 	@Override
-	protected Boolean startLink(final Boolean reconnecting) {
+	protected boolean startLink(final Boolean reconnecting) {
 		log.info("*** Address *** set to " + remoteAddress.getHostName() + ":" + remoteAddress.getPort());
 		log.info("*** Timeout *** set to " + connectionTimeout);
 		
@@ -117,12 +121,31 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		log.info("*** Connected *** to " + remoteAddress);
 		startReceiver();
 		
+		startUpTime = 0L;
+		
+		//TimerTask to keep connection opened
+		final TimerTask keepAlive = new TimerTask() {
+
+			@Override
+			public void run() {
+				sendKeepAlive();
+			}
+		};
+		
+		// scheduling the task at interval
+		timer.schedule(keepAlive, 10 * 1000, 10 * 1000);
+
+		initCommandQueue();
+		
 		return true;
 	}
 
 	@Override
-	protected Boolean closeLink() {
+	protected boolean closeLink() {
 		stopReceiver();
+		
+		timer.cancel();
+		
 		if (socket != null) {
 			try {
 				socket.close();
@@ -166,6 +189,15 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			listener.stop();
 			listener = null;
 		}
+	}
+
+	/**
+	 * Setup the gateway with AES keys and time
+	 */
+	private final void initCommandQueue() {
+		//TODO: Set current and previous AES RF key
+		
+		//TODO: Set current date/time
 	}
 
     @Override
@@ -214,6 +246,9 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
         		serial = parts[2];
         		addressDefault = Integer.parseInt(parts[3], 16);
         		address = Integer.parseInt(parts[4], 16);
+        		
+        		startUpTime = Long.parseLong(parts[5], 16);
+        		lastKeepAliveResponse = System.currentTimeMillis();
         		
         		log.debug("Received info from 'HM-CFG-LAN': [serial=" + serial + ", firmwareVersion=" + firmwareVersion + ", addressDefault=" + addressDefault + ", address=" + address + "]");
         		return;
@@ -317,7 +352,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 					return;
 				}
 				
-				int rssi = Util.toInt(parts[4]);
+				int rssi = Util.toIntFromHex(parts[4].substring(parts[4].length() - 2));
 				//Convert to TI CC1101 format
 				if (rssi <= -75)
 					rssi = ((rssi + 74) * 2) + 256;
@@ -342,11 +377,20 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     }
     
     @Override
-	public Boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
-		return send(packet.getData());
+	public boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
+		final String data = "S" + formatHexTime(System.currentTimeMillis()) + ",00,00000000,01," + formatHexTime(System.currentTimeMillis() - startUpTime) + "," + Util.toHex(packet.getData()).substring(2);
+		return send(data);
+	}
+	
+	protected boolean send(final String data) throws SocketException, IOException {
+		return send(data.getBytes());
 	}
     
-	protected Boolean send(final byte[] data) throws SocketException, IOException {
+	protected boolean send(final byte[] data) throws SocketException, IOException {
+		if (data == null) {
+			log.debug("Sending not possible. Data is null.");
+			return false;
+		}
 		if (socket == null) {
 			log.error("Sending not possible. Socket is null.");
 			return false;
@@ -363,11 +407,30 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		}
 		return true;
 	}
+    
+    /**
+     * Send a keep alive packet to keep the connection opened
+     * @return True, if packet sent successfully, false otherwise
+     */
+    private boolean sendKeepAlive() {
+    	try {
+			return send("K");
+		} catch (SocketException ex) {
+			log.debug("Error while sending keep alive packet", ex);
+		} catch (IOException ex) {
+			log.debug("Error while sending keep alive packet", ex);
+		}
+    	return false;
+    }
 
 	@Override
 	public void connectionTerminated() {
 		close();
 	}
+    
+    private String formatHexTime(final Long time) {
+    	return Util.padLeft(Util.toHex(time), 8, "0");
+    }
 
 	@Override
 	protected boolean setupAES() {

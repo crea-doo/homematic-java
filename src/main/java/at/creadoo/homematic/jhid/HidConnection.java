@@ -35,14 +35,14 @@ public class HidConnection implements MessageCallback  {
     /**
      * Returns connection status
      */
-    public Boolean isOpened() {
+    public boolean isOpened() {
     	return opened.get();
     }
     
     /**
      * Open the device and start the listener
      */
-    public Boolean open() {
+    public boolean open() {
         
     	// Initialize and start the listener
         listener = new HidListener(this, device);
@@ -58,7 +58,7 @@ public class HidConnection implements MessageCallback  {
     /**
      * Close the connection and stop all listeners
      */
-    public Boolean close() {
+    public boolean close() {
     	// the listener also closes the connection
     	listener.stop();
         
@@ -83,7 +83,7 @@ public class HidConnection implements MessageCallback  {
         }
     }
 
-    public boolean sendPacketToDevice(byte[] packet) {
+    public boolean sendPacketToDevice(final byte[] packet) {
         return listener.write(packet);
     }
 

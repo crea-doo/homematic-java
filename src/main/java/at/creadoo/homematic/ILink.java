@@ -23,7 +23,12 @@ public interface ILink {
 	 * 
 	 * @return true, if the link is connected
 	 */
-	Boolean isConnected();
+	boolean isConnected();
+
+	/**
+	 * Start the link
+	 */
+	boolean start();
 
 	/**
 	 * Close down the link
@@ -55,12 +60,12 @@ public interface ILink {
 	 * @param packet
 	 *            HomematicPacket instance, filled with the necessary information
 	 */
-	Boolean send(HomeMaticPacket packet) throws SocketException, IOException;
+	boolean send(HomeMaticPacket packet) throws SocketException, IOException;
 
 	/**
 	 * Check if the link supports automatic reconnection
 	 * 
 	 * @return true, if the link supports automatic reconnection
 	 */
-	Boolean isReconnectSupported();
+	boolean isReconnectSupported();
 }

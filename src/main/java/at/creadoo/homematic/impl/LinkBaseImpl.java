@@ -1,14 +1,12 @@
 package at.creadoo.homematic.impl;
 
-import java.io.IOException;
-import java.net.SocketException;
-
 import org.apache.log4j.Logger;
 
 import at.creadoo.homematic.ILink;
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.packets.HomeMaticPacket;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,7 +44,8 @@ public abstract class LinkBaseImpl implements ILink {
 		}
 	}
 
-	public Boolean start() {
+	@Override
+	public boolean start() {
     	return start(false);
     }
     
@@ -54,7 +53,7 @@ public abstract class LinkBaseImpl implements ILink {
         log.debug("Starting link " + getName());
 
         if (!listen.getAndSet(true)) {
-        	//TODO: actually setup the link and start it
+        	//Actually setup the link and start it
     		
     		if (!setupAES()) {
     			return false;
@@ -69,7 +68,7 @@ public abstract class LinkBaseImpl implements ILink {
         return true;
     }
 	
-	protected abstract Boolean startLink(final Boolean reconnecting);
+	protected abstract boolean startLink(final Boolean reconnecting);
 	
 	public void reconnect() {
 		start(true);
@@ -86,7 +85,7 @@ public abstract class LinkBaseImpl implements ILink {
 	}
 	
 	@Override
-	public Boolean isConnected() {
+	public boolean isConnected() {
 		return listen.get();
 	}
 
@@ -96,14 +95,14 @@ public abstract class LinkBaseImpl implements ILink {
 		if (listen.getAndSet(false)) {
 			cleanUpAES();
 			
-			//TODO: Actually stop the link
+			//Actually stop the link
 			closeLink();
 		} else {
 			log.warn("Link '" + getName() + "' not running");
 		}
 	}
 	
-	protected abstract Boolean closeLink();
+	protected abstract boolean closeLink();
 
 	@Override
 	public List<ILinkListener> getLinkListeners() {
@@ -131,10 +130,7 @@ public abstract class LinkBaseImpl implements ILink {
 	}
 
 	@Override
-	public Boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
-		//TODO: Implement write functionality
-		return false;
-	}
+	public abstract boolean send(final HomeMaticPacket packet) throws IOException;
 
 	public boolean getAESEnabled() {
 		return aesEnabled;

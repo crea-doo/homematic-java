@@ -46,6 +46,10 @@ public class Util {
 		return Integer.valueOf(data).intValue();
 	}
 	
+	public static int toIntFromHex(final String data) {
+		return Integer.valueOf(data, 16).intValue();
+	}
+	
 	public static int[] toIntArray(final byte[] data) {
 		final int[] result = new int[data.length];
 		for (int i = 0; i < data.length; i++) {
@@ -132,7 +136,7 @@ public class Util {
 	}
 
 	public static byte[] subset(final byte[] data, final int start, final int end) {
-		if (data == null || start < 0 || end <= start || end >= data.length) {
+		if (data == null || start < 0 || end < start || end >= data.length) {
 			return null;
 		}
 		
@@ -144,15 +148,47 @@ public class Util {
 	}
 
 	public static String toString(final byte[] data) {
+		if (data == null || data.length <= 0) {
+			return "";
+		}
 		return toString(data, 0, data.length - 1);
 	}
 
 	public static String toString(final byte[] data, final int start) {
-		return toString(data, start, data.length - 1);
+		return toString(data, start, data.length);
 	}
 
 	public static String toString(final byte[] data, final int start, final int end) {
-		return new String(subset(data, start, end));
+		byte[] result = subset(data, start, end);
+		if (result == null || result.length <= 0) {
+			return "";
+		}
+		return new String(result);
+	}
+	
+	public static String padRight(final String data, final int size, final String padChar) {
+		return padRight(data, size, padChar.charAt(0));
+	}
+	
+	public static String padRight(final String data, final int size, final char padChar) {
+		final StringBuilder padded = new StringBuilder(data);
+		while (padded.length() < size) {
+			padded.append(padChar);
+		}
+		return padded.toString();
+	}
+	
+	public static String padLeft(final String data, final int size, final String padChar) {
+		return padLeft(data, size, padChar.charAt(0));
+	}
+	
+	public static String padLeft(final String data, final int size, final char padChar) {
+		final StringBuilder padded = new StringBuilder();
+		while (padded.length() < size - data.length()) {
+			padded.append(padChar);
+		}
+		padded.append(data);
+		return padded.toString();
 	}
 	
 	public static byte[] appendItem(final byte[] data, final byte item) {
