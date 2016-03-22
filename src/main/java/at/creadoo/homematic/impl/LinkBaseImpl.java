@@ -8,7 +8,9 @@ import at.creadoo.homematic.packets.HomeMaticPacket;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -27,6 +29,14 @@ public abstract class LinkBaseImpl implements ILink {
     protected boolean aesInitialized = false;
     
     protected byte[] aesRfKey = null;
+    protected int aesRfKeyIndex = 1;
+
+    protected byte[] aesRfKeyOld = null;
+
+	/**
+	 * Holds the values of the message counters for the destination devices
+	 */
+	private final Map<Integer, Integer> messageCounters = new HashMap<Integer, Integer>();
 
 	public LinkBaseImpl() {
 		this(null);
@@ -140,12 +150,57 @@ public abstract class LinkBaseImpl implements ILink {
 		this.aesEnabled = useAES;
 	}
 
+	protected byte[] getAESRFKey() {
+		return this.aesRfKey;
+	}
+
 	public void setAESRFKey(final byte[] aesRfKey) {
 		this.aesRfKey = aesRfKey;
 	}
 
+	protected int getAESRFKeyIndex() {
+		return this.aesRfKeyIndex;
+	}
+
+	public void setAESRFKeyIndex(final int aesRfKeyIndex) {
+		if (aesRfKeyIndex > 0) {
+			this.aesRfKeyIndex = aesRfKeyIndex;
+		}
+	}
+
+	protected byte[] getAESRFKeyOld() {
+		return this.aesRfKeyOld;
+	}
+
+	public void setAESRFKeyOld(final byte[] aesRfKeyOld) {
+		this.aesRfKeyOld = aesRfKeyOld;
+	}
+
 	protected abstract boolean setupAES();
-	
+
 	protected abstract void cleanUpAES();
+
+    protected int getNextMessageCounter(final int destinationAddress) {
+    	int value = 0;
+    	if (messageCounters.containsKey(destinationAddress)) {
+    		value = messageCounters.get(destinationAddress) + 1;
+    		if (value > 255) {
+    			value = 0;
+        	}
+    	}
+    	messageCounters.put(destinationAddress, value);
+
+    	return value;
+    }
+
+    protected void decreaseMessageCounter(final int destinationAddress) {
+    	if (messageCounters.containsKey(destinationAddress)) {
+    		int value = messageCounters.get(destinationAddress) - 1;
+    		if (value < 0) {
+    			value = 255;
+        	}
+        	messageCounters.put(destinationAddress, value);
+    	}
+    }
 
 }

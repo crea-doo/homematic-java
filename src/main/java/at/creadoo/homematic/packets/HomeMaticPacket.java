@@ -20,7 +20,8 @@ public class HomeMaticPacket {
 	protected int packetLength = MIN_PACKET_LEN;
 	
 	// Byte 1
-	// Packets are consecutively numbered from 0x00 to 0xFF. One device has one separate message counter for each device it is paired with.
+	// Packets are consecutively numbered from 0x00 to 0xFF.
+	// One device has one separate message counter for each device it is paired with.
 	protected int messageCounter = 0x0;
 
 	// Byte 2
@@ -107,6 +108,33 @@ public class HomeMaticPacket {
 		this.data = generateRawData();
 	}
 
+	public int getControlByte() {
+		return controlByte;
+	}
+
+	public final byte[] getData() {
+		return this.data;
+	}
+
+	public int getDestinationAddress() {
+		return destinationAddress;
+	}
+
+	public int getMessageCounter() {
+		return messageCounter;
+	}
+
+	public final void setMessageCounter(final int messageCounter) {
+		if (messageCounter < 0) {
+			this.messageCounter = 0;
+		} else if (messageCounter > 255) {
+			this.messageCounter = messageCounter % 255;
+		} else {
+			this.messageCounter = messageCounter;
+		}
+		this.data = generateRawData();
+	}
+
 	public HomeMaticMessageType getMessageType() {
 		return messageType;
 	}
@@ -116,8 +144,25 @@ public class HomeMaticPacket {
 		this.data = generateRawData();
 	}
 
-	public int getPacketLen() {
+	public int getPacketLength() {
 		return packetLength;
+	}
+
+	public int[] getPayload() {
+		return payload;
+	}
+
+	public int getRssi() {
+		return rssi;
+	}
+
+	public final int getSenderAddress() {
+		return senderAddress;
+	}
+
+	public final void setSenderAddress(final int senderAddress) {
+		this.senderAddress = senderAddress;
+		this.data = generateRawData();
 	}
 
 	public final long getTimestamp() {
@@ -127,10 +172,6 @@ public class HomeMaticPacket {
 	public final void setTimestamp(final long timestamp) {
 		this.timestamp = timestamp;
 		this.data = generateRawData();
-	}
-
-	public final byte[] getData() {
-		return this.data;
 	}
 	
 	public final Long getHardwareId() {

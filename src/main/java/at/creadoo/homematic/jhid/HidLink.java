@@ -106,8 +106,10 @@ public class HidLink extends LinkBaseImpl implements HidServicesListener {
 	protected boolean closeLink() {
 		Boolean result = true;
 		for (Map.Entry<String, HidConnection> entry : this.connectionsBySerial.entrySet()) {
-			if (!entry.getValue().close()) {
-				result = false;
+			if (entry.getValue().isOpened()) {
+				if (!entry.getValue().close()) {
+					result = false;
+				}
 			}
 		}
 		return result;
@@ -125,6 +127,8 @@ public class HidLink extends LinkBaseImpl implements HidServicesListener {
     
     @Override
 	public boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
+    	packet.setMessageCounter(getNextMessageCounter(packet.getDestinationAddress()));
+
 		boolean result = false;
     	for (String serial: connectionsBySerial.keySet()) {
     		final HidConnection connection = connectionsBySerial.get(serial);
