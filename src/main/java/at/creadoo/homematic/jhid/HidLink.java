@@ -127,6 +127,8 @@ public class HidLink extends LinkBaseImpl implements HidServicesListener {
     
     @Override
 	public boolean send(final HomeMaticPacket packet) throws SocketException, IOException {
+    	packet.setMessageCounter(getNextMessageCounter(packet.getDestinationAddress()));
+
 		boolean result = false;
     	for (String serial: connectionsBySerial.keySet()) {
     		final HidConnection connection = connectionsBySerial.get(serial);

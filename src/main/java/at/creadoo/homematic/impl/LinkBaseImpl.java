@@ -29,8 +29,10 @@ public abstract class LinkBaseImpl implements ILink {
     protected boolean aesInitialized = false;
     
     protected byte[] aesRfKey = null;
-
     protected int aesRfKeyIndex = 1;
+
+    protected byte[] aesRfKeyOld = null;
+    protected int aesRfKeyOldIndex = 0;
 
 	/**
 	 * Holds the values of the message counters for the destination devices
@@ -156,6 +158,16 @@ public abstract class LinkBaseImpl implements ILink {
 	public void setAESRFKeyIndex(final int aesRfKeyIndex) {
 		if (aesRfKeyIndex > 0) {
 			this.aesRfKeyIndex = aesRfKeyIndex;
+		}
+	}
+
+	public void setAESRFKeyOld(final byte[] aesRfKeyOld) {
+		this.aesRfKeyOld = aesRfKeyOld;
+	}
+
+	public void setAESRFKeyOldIndex(final int aesRfKeyOldIndex) {
+		if (aesRfKeyOldIndex > 0 && (this.aesRfKeyIndex > 0 && aesRfKeyOldIndex < this.aesRfKeyIndex)) {
+			this.aesRfKeyOldIndex = aesRfKeyOldIndex;
 		}
 	}
 
