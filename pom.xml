@@ -36,7 +36,7 @@
 		<jna.version>4.2.2</jna.version>
 		<hid4java.version>0.4.0</hid4java.version>
 
-		<testng.version>6.9.10</testng.version>
+		<testng.version>6.8.21</testng.version>
 	</properties>
 
 	<scm>
