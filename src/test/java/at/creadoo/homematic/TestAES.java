@@ -57,7 +57,7 @@ public class TestAES {
 		Assert.assertEquals(CryptoUtil.aesDecrypt(cipherDecrypt, Util.toByteFromHex("3b3fd92eb72dad20333449f8e83cfb4a")), Util.toByteFromHex("6bc1bee22e409f96e93d7e117393172a"));
 	}
 	
-	@Test
+	//@Test
 	public void testDecryptPacket() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, Exception {
 		log.debug("testDecryptPacket");
 
