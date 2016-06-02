@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import at.creadoo.homematic.HomeMaticMessageType;
 import at.creadoo.homematic.HomeMaticStatus;
 import at.creadoo.homematic.ILink;
 import at.creadoo.homematic.ILinkListener;
