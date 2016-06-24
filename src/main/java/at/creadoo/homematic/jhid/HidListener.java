@@ -88,6 +88,7 @@ public class HidListener implements Runnable {
 	 */
 	public boolean write(final byte[] buf) {
 		final int result = device.write(buf, buf.length, (byte) 0);
+		//final int result = device.write(Util.prependItem(buf, (byte) 0), buf.length, (byte) 0);
 		if (result != -1) {
 			log.debug("Bytes written: " + result);
 		} else {

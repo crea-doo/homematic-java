@@ -370,88 +370,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			log.error("Device 'HM-CFG-LAN' requires AES, but AES was not configured!");
 			return;
 		} else if (c == 'E' || c == 'R') {
-			if (parts.length < 6) {
-				log.warn("Invalid packet received from HM-CFG-LAN: " + Util.toHex(packet));
-				return;
-			}
-			
-			/*
-			Index	Meaning
-			0		Sender address
-			1		Control and status byte
-			2		Time received
-			3		AES key index?
-			4		RSSI
-			5		BidCoS packet
-			*/
-
-			int tempNumber = Integer.parseInt(parts[1], 16);
-			
-			/*
-			00: Not set
-			01: Packet received, wait for AES handshake
-			02: High load
-			04: Overload
-			*/
-			int statusByte = tempNumber >> 8;
-
-			log.debug("tempNumber: " + parts[1]);
-			log.debug("tempNumber: " + tempNumber);
-			log.debug("statusByte: " + statusByte);
-			
-			if (statusByte == 4) {
-				log.warn("HM-CFG-LAN reached 1% rule.");
-			} else if(statusByte == 2) {
-				log.warn("HM-CFG-LAN nearly reached 1% rule.");
-			}
-			
-			/*
-			00: Not set
-			01: ACK or ACK was sent in response to this packet
-			02: Message without BIDI bit was sent
-			08: No response after three tries
-			21: ?
-			2*: ?
-			30: AES handshake not successful
-			4*: AES handshake successful
-			50: AES handshake not successful
-			8*: ?
-			*/
-			int controlByte = tempNumber & 0xFF;
-			log.debug("controlByte: " + controlByte);
-			
-			if (parts[5].length() > 18) { // 18 is minimal packet length
-				byte[] b = Util.toByteFromHex(parts[5]);
-				
-				if (b.length < 10) {
-					log.warn("Invalid packet received from HM-CFG-LAN: " + Util.toHex(packet));
-					return;
-				} else if (b.length > 200) {
-					log.warn("Tried to import BidCoS packet larger than 200 bytes.");
-					return;
-				}
-				
-				int rssi = Util.toIntFromHex(parts[4].substring(parts[4].length() - 2));
-				//Convert to TI CC1101 format
-				if (rssi <= -75)
-					rssi = ((rssi + 74) * 2) + 256;
-				else
-					rssi = (rssi + 74) * 2;
-				
-				final HomeMaticPacket homeMaticPacket = Util.createPacketByMessageType(Util.prependItem(b, b.length), rssi);
-				if (homeMaticPacket == null) {
-		        	return;
-		        }
-		        
-		        log.debug("Packet: " + homeMaticPacket);
-		        
-		        for (ILinkListener listener : getLinkListeners()) {
-		            listener.received(homeMaticPacket);
-		        }
-        	} else {
-        		log.warn("Too short packet received: " + Util.toHex(packet));
-        		return;
-        	}
+			final HomeMaticPacket homeMaticPacket = Util.createPacketByMessageType(Util.convertLANPacketToBidCos(packet));
+			if (homeMaticPacket == null) {
+	        	return;
+	        }
+	        
+	        log.debug("Packet: " + homeMaticPacket);
+	        
+	        for (ILinkListener listener : getLinkListeners()) {
+	            listener.received(homeMaticPacket);
+	        }
 		}
     }
     

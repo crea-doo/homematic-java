@@ -264,6 +264,101 @@ public class Util {
 		return result;
 	}
 
+	public static byte[] convertLANPacketToBidCos(final byte[] packet) {
+    	final String[] parts = new String(packet).split(",");
+        
+        char c = (char) packet[0];
+
+        if (c == 'E' || c == 'R') {
+			if (parts.length < 6) {
+				log.warn("Invalid packet: " + Util.toHex(packet));
+				return null;
+			}
+			
+			/*
+			Index	Meaning
+			0		Sender address
+			1		Control and status byte
+			2		Time received
+			3		AES key index?
+			4		RSSI
+			5		BidCoS packet
+			*/
+
+			int tempNumber = Integer.parseInt(parts[1], 16);
+			
+			/*
+			00: Not set
+			01: Packet received, wait for AES handshake
+			02: High load
+			04: Overload
+			*/
+			int statusByte = tempNumber >> 8;
+
+			log.debug("tempNumber: " + parts[1]);
+			log.debug("tempNumber: " + tempNumber);
+			log.debug("statusByte: " + statusByte);
+			
+			if (statusByte == 4) {
+				log.warn("HM-CFG-LAN reached 1% rule.");
+			} else if(statusByte == 2) {
+				log.warn("HM-CFG-LAN nearly reached 1% rule.");
+			}
+			
+			/*
+			00: Not set
+			01: ACK or ACK was sent in response to this packet
+			02: Message without BIDI bit was sent
+			08: No response after three tries
+			21: ?
+			2*: ?
+			30: AES handshake not successful
+			4*: AES handshake successful
+			50: AES handshake not successful
+			8*: ?
+			*/
+			int controlByte = tempNumber & 0xFF;
+			log.debug("controlByte: " + controlByte);
+			
+			if (parts[5].length() > 18) { // 18 is minimal packet length
+				byte[] b = Util.toByteFromHex(parts[5]);
+				
+				if (b.length < 10) {
+					log.warn("Invalid packet: " + Util.toHex(packet));
+					return null;
+				} else if (b.length > 200) {
+					log.warn("Tried to import BidCoS packet larger than 200 bytes.");
+					return null;
+				}
+				
+				int rssi = Util.toIntFromHex(parts[4].substring(parts[4].length() - 2));
+				//Convert to TI CC1101 format
+				if (rssi <= -75)
+					rssi = ((rssi + 74) * 2) + 256;
+				else
+					rssi = (rssi + 74) * 2;
+				
+				final HomeMaticPacket homeMaticPacket = Util.createPacketByMessageType(Util.prependItem(b, b.length), rssi);
+				if (homeMaticPacket == null) {
+		        	return null;
+		        }
+
+				log.debug("Packet (LAN):");
+				Util.logPacket(packet);
+
+				log.debug("Packet (Converted):");
+				Util.logPacket(homeMaticPacket.getData());
+				
+				return homeMaticPacket.getData();
+        	} else {
+        		log.warn("Packet too short: " + Util.toHex(packet));
+        		return null;
+        	}
+		}
+
+        return null;
+	}
+
 	// Procedure for the initialization of new HomeMaticPacket:
 	public static HomeMaticPacket createPacket(final byte[] data) {
 		char c = (char) data[0];
@@ -271,17 +366,27 @@ public class Util {
 		
 		switch (c) {
 		case 'E':
-			byte[] tmp = new byte[data[13] + 1];
+			int copyLen = Util.toInt(data[13]) + 1;
+			if (copyLen > data.length - 14) {
+				copyLen = data.length - 14;
+			}
+			
+			log.debug("Len data: " + data.length);
+			log.debug("Copy data len: " + (copyLen));
+			
+			
+			byte[] tmp = new byte[copyLen];
 			try {
-				System.arraycopy(data, 13, tmp, 0, data[13] + 1);
+				System.arraycopy(data, 13, tmp, 0, copyLen);
 				return createPacketByMessageType(tmp, Util.toInt(data[12]));
 			} catch (Throwable ex) {
 				log.error("Error parsing message", ex);
 			}
+			break;
 		case 'R':
 		case 'I':
 			log.debug("Type '" + c + "' not yet implemented");
-			return null;
+			break;
 		default:
 			log.debug("Unkown message: [ " + Arrays.toString(data) + " ]");
 		}
@@ -294,7 +399,12 @@ public class Util {
 	}
 
 	public static HomeMaticPacket createPacketByMessageType(final byte[] data, final int rssi) {
-		int id = toInt(data[3]);
+		if (data == null) {
+			return null;
+		}
+		
+		final int id = toInt(data[3]);
+		log.debug("Message Type ID: " + id + " (0x" + Util.toHex(id) + ")");
 		final HomeMaticMessageType messageType = HomeMaticMessageType.getById(id);
 		
 		switch (messageType) {
