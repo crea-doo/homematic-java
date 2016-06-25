@@ -32,6 +32,10 @@ public class TestPacket {
 		Util.logPacket(b);
 		
 		final HomeMaticPacket p = Util.createPacket(b);
+		if (p == null) {
+			return null;
+		}
+		log.debug("Payload: " + Util.toHex(p.getPayload(), true));
 		log.debug("Packet: " + p);
 		
 		return p;
@@ -44,7 +48,7 @@ public class TestPacket {
 		if (p == null) {
 			return null;
 		}
-		
+		log.debug("Payload: " + Util.toHex(p.getPayload(), true));
 		log.debug("Packet: " + p);
 		
 		return p;

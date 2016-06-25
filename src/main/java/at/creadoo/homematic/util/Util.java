@@ -367,14 +367,6 @@ public class Util {
 		switch (c) {
 		case 'E':
 			int copyLen = Util.toInt(data[13]) + 1;
-			if (copyLen > data.length - 14) {
-				copyLen = data.length - 14;
-			}
-			
-			log.debug("Len data: " + data.length);
-			log.debug("Copy data len: " + (copyLen));
-			
-			
 			byte[] tmp = new byte[copyLen];
 			try {
 				System.arraycopy(data, 13, tmp, 0, copyLen);
