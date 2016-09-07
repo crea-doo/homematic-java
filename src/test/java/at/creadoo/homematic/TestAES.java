@@ -5,7 +5,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Provider;
 import java.security.Security;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -13,6 +12,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
 import org.apache.log4j.Logger;
+import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -111,19 +111,17 @@ public class TestAES {
 	public void testDecryptPacket() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
 		log.debug("testDecryptPacket");
 
-		final byte[] aesKey = Util.toByteFromHex("D2F2A4C5F823661C00349FFCA38E0625");
-		final byte[] encryptIV = Util.toByteFromHex("1B0D06036A351A0D150A050201000000");
-		final byte[] decryptIV = Util.toByteFromHex("7AC0DC0BDAE15CAA4B6D912CCB502762");
-		final Cipher cipherEncrypt = CryptoUtil.getAESCipherEncrypt(aesKey, encryptIV);
-		final Cipher cipherDecrypt = CryptoUtil.getAESCipherDecrypt(aesKey, decryptIV);
+		final byte[] aesKey = Util.toByteFromHex("00112233445566778899AABBCCDDEEFF");
+		final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000");
+		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C");
+		final Cipher cipherEncrypt = CryptoUtil.getAESCipherEncrypt(aesKey, aesRemoteIV);
+		final Cipher cipherDecrypt = CryptoUtil.getAESCipherDecrypt(aesKey, aesLocalIV);
 		
-		log.debug(Util.toHex(CryptoUtil.aesDecrypt(cipherDecrypt,Util.toByteFromHex("EFBFBD2BEFBFBDDD8CEFBFBD241901EFBFBDEFBFBD226EEFBFBD6F35EFBFBD09EFBFBDEFBFBD6F4767EFBFBD261BEFBFBDEFBFBDEFBFBDEFBFBD31EFBFBDDEAAEFBFBDEFBFBDEFBFBDEFBFBD1F6C152B64DAB425EFBFBD0F44EFBFBD5F40696AEFBFBD09EFBFBDEFBFBDEFBFBDEFBFBD0827427750EFBFBD"))));
-		log.debug(Util.toStringFromHex(CryptoUtil.aesDecrypt(cipherDecrypt, Util.toByteFromHex("EFBFBD2BEFBFBDDD8CEFBFBD241901EFBFBDEFBFBD226EEFBFBD6F35EFBFBD09EFBFBDEFBFBD6F4767EFBFBD261BEFBFBDEFBFBDEFBFBDEFBFBD31EFBFBDDEAAEFBFBDEFBFBDEFBFBDEFBFBD1F6C152B64DAB425EFBFBD0F44EFBFBD5F40696AEFBFBD09EFBFBDEFBFBDEFBFBDEFBFBD0827427750EFBFBD"))));
-		log.debug(Util.toStringFromHex(CryptoUtil.aesDecrypt(cipherDecrypt, "EFBFBD2BEFBFBDDD8CEFBFBD241901EFBFBDEFBFBD226EEFBFBD6F35EFBFBD09EFBFBDEFBFBD6F4767EFBFBD261BEFBFBDEFBFBDEFBFBDEFBFBD31EFBFBDDEAAEFBFBDEFBFBDEFBFBDEFBFBD1F6C152B64DAB425EFBFBD0F44EFBFBD5F40696AEFBFBD09EFBFBDEFBFBDEFBFBDEFBFBD0827427750EFBFBD".getBytes())));
-		log.debug(Util.toHex(CryptoUtil.aesDecrypt(cipherDecrypt, Util.toByteFromHex("2BDD8C241901226E6F35096F4767261B31DEAA1F6C152B64DAB4250F445F40696A090827427750"))));
-		log.debug(Util.toHex(CryptoUtil.aesDecrypt(cipherDecrypt, "2BDD8C241901226E6F35096F4767261B31DEAA1F6C152B64DAB4250F445F40696A090827427750".getBytes())));
-		log.debug(Util.toString(CryptoUtil.aesDecrypt(cipherDecrypt, "2BDD8C241901226E6F35096F4767261B31DEAA1F6C152B64DAB4250F445F40696A090827427750".getBytes())));
-		//log.debug(Util.toStringFromHex(CryptoUtil.aesDecrypt(cipherDecrypt, Util.toByteFromHex("2BDD8C241901226E6F35096F4767261B31DEAA1F6C152B64DAB4250F445F40696A090827427750"))));
+		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000B721,0000,00"
+		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB")));
+		
+		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000F1DD,0000,00"
+		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("F931D53FFC21BB5B58226FB971176BD0D44F5476C99E1274EDB84F42B9F1F3B5619029E899F269E97175B854A38379A1CB0A454C78038A692C7708")));
 	}
 
 	//@Test(timeOut=5000)
@@ -132,25 +130,35 @@ public class TestAES {
 		
 		final AtomicBoolean success = new AtomicBoolean(false);
 		
-		final DummySocketLink dummyLink = new DummySocketLink();
+		final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000");
+		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C");
+		
+		log.debug("RemoteIV: " + Util.toHex(aesRemoteIV));
+		log.debug("LocalIV: " + Util.toHex(aesLocalIV));
+		
+		log.error("RemoteIV Packet: " + "V" + Util.toHex(aesRemoteIV));
+		
+		final DummySocketLink dummyLink = new DummySocketLink(aesRemoteIV, aesLocalIV);
 		dummyLink.setAESEnabled(true);
-		dummyLink.setAESLANKey(Util.toByteFromHex("D2F2A4C5F823661C00349FFCA38E0625"));
-		dummyLink.setAESRFKey(Util.toByteFromHex("B263E6ABEF373A47B125204E95DF13BB"));
+		dummyLink.setAESLANKey(Util.toByteFromHex("00112233445566778899AABBCCDDEEFF"));
+		dummyLink.setAESRFKey(Util.toByteFromHex("00112233445566778899AABBCCDDEEFF"));
 		dummyLink.addLinkListener(new ILinkListener() {
 			
 			@Override
 			public void received(final HomeMaticPacket packet) {
-				 if (dummyLink.getAESEnabled()) {
-		        	char c = (char) packet.getData()[0];
-		        	if (c == 'V') {
-		        		final byte[] subset = Util.subset(packet.getData(), 1);
-		    			log.debug("Received remoteIV: [" + Util.toString(subset) + "]");
-		        	}
-		        } else {
+				/*
+				if (dummyLink.getAESEnabled()) {
+					char c = (char) packet.getData()[0];
+					if (c == 'V') {
+						final byte[] subset = Util.subset(packet.getData(), 1);
+						log.debug("Received remoteIV: [" + Util.toString(subset) + "]");
+					}
+				} else {
 					Util.logPacket(dummyLink, packet.getData());
-		        }
-				
+				}
+
 				success.getAndSet(true);
+				*/
 			}
 			
 			@Override
@@ -160,8 +168,15 @@ public class TestAES {
 		});
 		dummyLink.start();
 		
+		Thread.sleep(1000);
+		
+		//dummyLink.received(new String("V" + Util.toHex(aesRemoteIV)).getBytes());
+		dummyLink.received(Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB"));
+		
+		/*
 		while (!success.get()) {
 			Thread.sleep(100);
 		}
+		*/
 	}
 }

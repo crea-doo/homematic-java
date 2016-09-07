@@ -1,7 +1,6 @@
 package at.creadoo.homematic;
 
 import at.creadoo.homematic.socket.SocketLink;
-import at.creadoo.homematic.util.CryptoUtil;
 import at.creadoo.homematic.util.Util;
 
 import java.io.IOException;
@@ -16,16 +15,27 @@ public class DummySocketLink extends SocketLink {
 
 	private static final Logger log = Logger.getLogger(DummySocketLink.class);
 
-	private final String remoteIV = "V1B0D06036A351A0D0201000000000000";
-	
-	private final String localIV = "V7DA24AF4F55B92B5B4E1CE35F714EC9B";
+	private final byte[] remoteIV;
 
 	public DummySocketLink() {
 		super(null);
+		
+		this.remoteIV = null;
+		this.aesLocalIV = null;
+	}
+
+	public DummySocketLink(final byte[] remoteIV, final byte[] localIV) {
+		super(null);
+		
+		this.remoteIV = remoteIV;
+		this.aesLocalIV = localIV;
 	}
 
 	public DummySocketLink(final InetSocketAddress remoteAddress) {
 		super(remoteAddress);
+		
+		this.remoteIV = null;
+		this.aesLocalIV = null;
 	}
     
 	@Override
@@ -41,12 +51,20 @@ public class DummySocketLink extends SocketLink {
 	@Override
 	protected boolean startLink(final Boolean reconnecting) {
 		if (this.getAESEnabled()) {
+			/*
 			new Timer().schedule(new TimerTask() {
 				@Override
 				public void run() {
-					DummySocketLink.this.received(remoteIV.getBytes());
+			*/
+					if (remoteIV != null) {
+						DummySocketLink.this.received(("V" + Util.toHex(remoteIV)).getBytes());
+					} else {
+						log.error("Remote IV not set!");
+					}
+			/*
 				}
 			}, 500);
+			*/
 		}
 		
 		return true;
@@ -63,36 +81,14 @@ public class DummySocketLink extends SocketLink {
         	char c = (char) data[0];
         	if (c == 'V') {
         		final byte[] subset = Util.subset(data, 1);
-    			log.debug("Received localIV: [" + Util.toString(subset) + "]");
+    			log.debug("Send localIV: [" + Util.toString(subset) + "]");
 
-    			this.aesInitialized = true;
-    			
-    			// Send back encrypted data to test decryption
-    			this.received(Util.toByteFromHex("EFBFBD22EFBFBD66EFBFBD4DEFBFBDD4AF22EFBFBDEFBFBDEFBFBD29313536C4ADEFBFBD7DEFBFBDC793EFBFBDEFBFBDEFBFBD6A72664BEFBFBD78"));
-    			this.received(Util.toByteFromHex("65EFBFBDEFBFBD70EFBFBDEFBFBD4233EFBFBD2FEFBFBD2F271A101AEFBFBD2760EFBFBDEFBFBD4CEFBFBDEFBFBD7B7967EFBFBD0405EFBFBD4B5750EFBFBDEFBFBD"));
+    			//this.aesInitialized = true;
         	}
         }
 		
 		return true;
 	}
-
-	@Override
-	protected boolean setupAES() {
-    	if (this.getAESEnabled()) {
-    		this.aesLocalIV = Util.toByteFromHex(localIV.substring(1));
-
-			log.debug("LanKey for 'HM-CFG-LAN': [" + Util.toHex(this.aesLanKey) + "]");
-			log.debug("LocalIV for 'HM-CFG-LAN': [" + Util.toHex(this.aesLocalIV) + "]");
-			
-    		try {
-	    		this.aesCipherEncrypt = CryptoUtil.getAESCipherEncrypt(aesLanKey, this.aesLocalIV);
-			} catch (Throwable ex) {
-				log.error("Error while setting up AES", ex);
-				return false;
-			}
-    	}
-    	return true;
-    }
 
 	@Override
 	protected void cleanUpAES() {
