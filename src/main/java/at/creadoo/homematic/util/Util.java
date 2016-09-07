@@ -198,6 +198,13 @@ public class Util {
 		return result;
 	}
 	
+	public static byte[] appendItem(final byte[] data, final byte[] items) {
+		byte[] result = new byte[data.length + items.length];
+		System.arraycopy(data, 0, result, 0, data.length);
+		System.arraycopy(items, 0, result, data.length, items.length);
+		return result;
+	}
+	
 	public static byte[] appendItem(final byte[] data, final int item) {
 		return appendItem(data, toByte(item));
 	}
@@ -206,6 +213,13 @@ public class Util {
 		byte[] result = new byte[data.length + 1];
 		System.arraycopy(data, 0, result, 1, data.length);
 		result[0] = item;
+		return result;
+	}
+	
+	public static byte[] prependItem(final byte[] data, final byte[] items) {
+		byte[] result = new byte[data.length + items.length];
+		System.arraycopy(items, 0, result, 0, items.length);
+		System.arraycopy(data, 0, result, items.length, data.length);
 		return result;
 	}
 	

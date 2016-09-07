@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -13,6 +14,7 @@ import java.util.TimerTask;
 import javax.crypto.Cipher;
 
 import org.apache.log4j.Logger;
+import org.bouncycastle.crypto.BufferedBlockCipher;
 
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.MessageCallback;
@@ -287,12 +289,19 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
         	log.debug("Treating packet as encrypted");
 
         	try {
+            	log.debug("Encrypted packet >>");
                 Util.logPacket(this, data);
-                
-                packet = CryptoUtil.aesDecrypt(this.aesCipherDecrypt, data);
+            	log.debug("<<");
+                if (this.aesCipherDecrypt == null) {
+                	log.error("Decryption not working due to missing cipher");
+                	packet = data;
+                } else {
+                	packet = CryptoUtil.aesDecrypt(this.aesCipherDecrypt, data);
+                }
 
-            	log.debug("Decrypted packet");
-                Util.logPacket(this, data);
+            	log.debug("Decrypted packet >>");
+                Util.logPacket(this, packet);
+            	log.debug("<<");
 			} catch (Exception ex) {
 				log.error("Error while decrypting", ex);
 				return;
@@ -301,8 +310,9 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
         	log.debug("Treating packet as plain");
             packet = data;
 
-        	log.debug("Plain packet");
+        	log.debug("Plain packet >>");
             Util.logPacket(this, data);
+        	log.debug("<<");
         }
         
     	final String[] parts = new String(packet).split(",");
@@ -400,7 +410,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	protected boolean send(final String data) throws SocketException, IOException {
 		return send(data.getBytes());
 	}
-    
+
 	protected boolean send(final byte[] data) throws SocketException, IOException {
 		if (data == null) {
 			log.debug("Sending not possible. Data is null.");
@@ -450,13 +460,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	@Override
 	protected boolean setupAES() {
     	if (this.getAESEnabled()) {
-    		this.aesLocalIV = Util.toByteFromHex(Util.randomHex(32));
+    		if (this.aesLocalIV == null) {
+    			this.aesLocalIV = Util.toByteFromHex(Util.randomHex(32));
+    		}
 
 			log.debug("LanKey for 'HM-CFG-LAN': [" + Util.toHex(this.aesLanKey) + "]");
 			log.debug("LocalIV for 'HM-CFG-LAN': [" + Util.toHex(this.aesLocalIV) + "]");
 			
     		try {
-	    		this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(aesLanKey, this.aesLocalIV);
+	    		//this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKey, this.aesLocalIV);
+	    		this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKey, this.aesLocalIV);
 			} catch (Throwable ex) {
 				log.error("Error while setting up AES", ex);
 				return false;
