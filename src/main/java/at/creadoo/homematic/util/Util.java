@@ -71,11 +71,11 @@ public class Util {
 	}
 	
 	public static String toHex(final byte data) {
-		return String.format("%02x", Byte.valueOf(data)).toUpperCase();
+		return String.format("%02x", Byte.valueOf(data)).toLowerCase();
 	}
 
 	public static String toHex(final int data) {
-		return String.format("%02x", Integer.valueOf(data)).toUpperCase();
+		return String.format("%02x", Integer.valueOf(data)).toLowerCase();
 	}
 
 	public static String toHex(final int[] data, final boolean prettyPrint) {
@@ -83,7 +83,7 @@ public class Util {
     }
 
 	public static String toHex(final long data) {
-		return String.format("%02x", Long.valueOf(data)).toUpperCase();
+		return String.format("%02x", Long.valueOf(data)).toLowerCase();
 	}
 	
 	public static String toHex(final String data) {
@@ -102,7 +102,7 @@ public class Util {
         final StringBuilder sb = new StringBuilder();
         for (byte aD : data) {
             final int val = 0xFF & (int) aD;
-            sb.append(String.format("%02x", val).toUpperCase());
+            sb.append(String.format("%02x", val).toLowerCase());
             if (prettyPrint) {
             	sb.append(" ");
             }
@@ -512,7 +512,7 @@ public class Util {
 			sb.append(Integer.toHexString(randomService.nextInt(16)));
 		}
 		sb.setLength(length);
-		return sb.toString().toUpperCase();
+		return sb.toString().toLowerCase();
 	}
 
 }

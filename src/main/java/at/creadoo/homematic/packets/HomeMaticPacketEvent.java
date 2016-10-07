@@ -56,6 +56,9 @@ public class HomeMaticPacketEvent extends HomeMaticPacket {
 	protected final void parsePayload() {
 		if (this.payload[2] == 0x00) {
 			status = HomeMaticStatus.OFF;
+		} else if (this.payload[2] == 0x01) {
+			//TODO What does 0x01 mean?
+			//status = HomeMaticStatus.ON;
 		} else if (this.payload[2] == 0xC8) {
 			status = HomeMaticStatus.ON;
 		}

@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -14,7 +13,6 @@ import java.util.TimerTask;
 import javax.crypto.Cipher;
 
 import org.apache.log4j.Logger;
-import org.bouncycastle.crypto.BufferedBlockCipher;
 
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.MessageCallback;
@@ -296,7 +294,10 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
                 	log.error("Decryption not working due to missing cipher");
                 	packet = data;
                 } else {
-                	packet = CryptoUtil.aesDecrypt(this.aesCipherDecrypt, data);
+                	final String temp = Util.toHex(data).toLowerCase();
+                	//log.debug("TEMP: " + temp);
+                	//packet = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
+                	packet = CryptoUtil.aesCrypt(this.aesCipherDecrypt, Util.toByteFromHex(temp));
                 }
 
             	log.debug("Decrypted packet >>");
@@ -343,11 +344,10 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
         		return;
         	}
 		} else if (c == 'V' && getAESEnabled()) {
-			final byte[] subset = Util.subset(packet, 1);
-			log.debug("Received info from 'HM-CFG-LAN': [" + Util.toString(subset) + "]");
-	        Util.logPacket(this, subset);
+			final String remoteIV = Util.toString(Util.subset(packet, 1)).toLowerCase();
+			log.debug("Received info from 'HM-CFG-LAN': [" + remoteIV + "]");
 	        
-	        this.aesRemoteIV = Util.toByteFromHex(subset);
+	        this.aesRemoteIV = Util.toByteFromHex(remoteIV);
 	        
 	        if (this.aesRemoteIV.length != 16) {
 				log.warn("RemoteIV received from HM-CFG-LAN not in hexadecimal format: " + Util.toHex(packet));
@@ -461,14 +461,13 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	protected boolean setupAES() {
     	if (this.getAESEnabled()) {
     		if (this.aesLocalIV == null) {
-    			this.aesLocalIV = Util.toByteFromHex(Util.randomHex(32));
+    			this.aesLocalIV = Util.toByteFromHex(Util.randomHex(32).toLowerCase());
     		}
 
 			log.debug("LanKey for 'HM-CFG-LAN': [" + Util.toHex(this.aesLanKey) + "]");
 			log.debug("LocalIV for 'HM-CFG-LAN': [" + Util.toHex(this.aesLocalIV) + "]");
 			
     		try {
-	    		//this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKey, this.aesLocalIV);
 	    		this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKey, this.aesLocalIV);
 			} catch (Throwable ex) {
 				log.error("Error while setting up AES", ex);

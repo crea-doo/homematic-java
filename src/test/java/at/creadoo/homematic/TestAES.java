@@ -63,7 +63,7 @@ public class TestAES {
 	 */
 	@Test
 	public void testAESVectors() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
-		final byte[] encryptionKey = Util.toByteFromHex("2b7e151628aed2a6abf7158809cf4f3c");
+		final byte[] encryptionKey = Util.toByteFromHex("2b7e151628aed2a6abf7158809cf4f3c".toLowerCase());
 		
 		/*
 		log.debug("Providers:");
@@ -76,22 +76,22 @@ public class TestAES {
 		*/
 		
 		log.debug("testAESVectors [01]");
-		final byte[] iV1 = Util.toByteFromHex("000102030405060708090a0b0c0d0e0f");
+		final byte[] iV1 = Util.toByteFromHex("000102030405060708090a0b0c0d0e0f".toLowerCase());
 		Assert.assertEquals(AESEncrypt(encryptionKey, iV1, Util.toByteFromHex("6bc1bee22e409f96e93d7e117393172a")), Util.toByteFromHex("3b3fd92eb72dad20333449f8e83cfb4a"));
 		Assert.assertEquals(AESDecrypt(encryptionKey, iV1, Util.toByteFromHex("3b3fd92eb72dad20333449f8e83cfb4a")), Util.toByteFromHex("6bc1bee22e409f96e93d7e117393172a"));
 
 		log.debug("testAESVectors [02]");
-		final byte[] iV2 = Util.toByteFromHex("3B3FD92EB72DAD20333449F8E83CFB4A");
+		final byte[] iV2 = Util.toByteFromHex("3B3FD92EB72DAD20333449F8E83CFB4A".toLowerCase());
 		Assert.assertEquals(AESEncrypt(encryptionKey, iV2, Util.toByteFromHex("ae2d8a571e03ac9c9eb76fac45af8e51")), Util.toByteFromHex("c8a64537a0b3a93fcde3cdad9f1ce58b"));
 		Assert.assertEquals(AESDecrypt(encryptionKey, iV2, Util.toByteFromHex("c8a64537a0b3a93fcde3cdad9f1ce58b")), Util.toByteFromHex("ae2d8a571e03ac9c9eb76fac45af8e51"));
 
 		log.debug("testAESVectors [03]");
-		final byte[] iV3 = Util.toByteFromHex("C8A64537A0B3A93FCDE3CDAD9F1CE58B");
+		final byte[] iV3 = Util.toByteFromHex("C8A64537A0B3A93FCDE3CDAD9F1CE58B".toLowerCase());
 		Assert.assertEquals(AESEncrypt(encryptionKey, iV3, Util.toByteFromHex("30c81c46a35ce411e5fbc1191a0a52ef")), Util.toByteFromHex("26751f67a3cbb140b1808cf187a4f4df"));
 		Assert.assertEquals(AESDecrypt(encryptionKey, iV3, Util.toByteFromHex("26751f67a3cbb140b1808cf187a4f4df")), Util.toByteFromHex("30c81c46a35ce411e5fbc1191a0a52ef"));
 
 		log.debug("testAESVectors [04]");
-		final byte[] iV4 = Util.toByteFromHex("26751F67A3CBB140B1808CF187A4F4DF");
+		final byte[] iV4 = Util.toByteFromHex("26751F67A3CBB140B1808CF187A4F4DF".toLowerCase());
 		Assert.assertEquals(AESEncrypt(encryptionKey, iV4, Util.toByteFromHex("f69f2445df4f9b17ad2b417be66c3710")), Util.toByteFromHex("c04b05357c5d1c0eeac4c66f9ff7f2e6"));
 		Assert.assertEquals(AESDecrypt(encryptionKey, iV4, Util.toByteFromHex("c04b05357c5d1c0eeac4c66f9ff7f2e6")), Util.toByteFromHex("f69f2445df4f9b17ad2b417be66c3710"));
 		
@@ -99,29 +99,29 @@ public class TestAES {
 	
 	private byte[] AESEncrypt(final byte[] encryptionKey, final byte[] initializationVector, final byte[] testVector) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
 		final Cipher cipherEncrypt = CryptoUtil.getAESCipherEncrypt(encryptionKey, initializationVector);
-		return CryptoUtil.aesEncrypt(cipherEncrypt, testVector);
+		return CryptoUtil.aesCrypt(cipherEncrypt, testVector);
 	}
 	
 	private byte[] AESDecrypt(final byte[] encryptionKey, final byte[] initializationVector, final byte[] testVector) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
 		final Cipher cipherDecrypt = CryptoUtil.getAESCipherDecrypt(encryptionKey, initializationVector);
-		return CryptoUtil.aesDecrypt(cipherDecrypt, testVector);
+		return CryptoUtil.aesCrypt(cipherDecrypt, testVector);
 	}
 	
 	@Test
 	public void testDecryptPacket() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
 		log.debug("testDecryptPacket");
 
-		final byte[] aesKey = Util.toByteFromHex("00112233445566778899AABBCCDDEEFF");
-		final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000");
-		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C");
+		final byte[] aesKey = Util.toByteFromHex("00112233445566778899AABBCCDDEEFF".toLowerCase());
+		final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000".toLowerCase());
+		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C".toLowerCase());
 		final Cipher cipherEncrypt = CryptoUtil.getAESCipherEncrypt(aesKey, aesRemoteIV);
 		final Cipher cipherDecrypt = CryptoUtil.getAESCipherDecrypt(aesKey, aesLocalIV);
 		
 		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000B721,0000,00"
-		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB")));
+		//Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB".toLowerCase())));
 		
 		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000F1DD,0000,00"
-		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("F931D53FFC21BB5B58226FB971176BD0D44F5476C99E1274EDB84F42B9F1F3B5619029E899F269E97175B854A38379A1CB0A454C78038A692C7708")));
+		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("F931D53FFC21BB5B58226FB971176BD0D44F5476C99E1274EDB84F42B9F1F3B5619029E899F269E97175B854A38379A1CB0A454C78038A692C7708".toLowerCase())));
 	}
 
 	//@Test(timeOut=5000)
