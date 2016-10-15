@@ -12,7 +12,6 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 
 import org.apache.log4j.Logger;
-import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -108,20 +107,30 @@ public class TestAES {
 	}
 	
 	@Test
-	public void testDecryptPacket() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
+	public void testDecryptPacket1() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
 		log.debug("testDecryptPacket");
 
-		final byte[] aesKey = Util.toByteFromHex("00112233445566778899AABBCCDDEEFF".toLowerCase());
-		final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000".toLowerCase());
-		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C".toLowerCase());
-		final Cipher cipherEncrypt = CryptoUtil.getAESCipherEncrypt(aesKey, aesRemoteIV);
+		final byte[] aesKey = Util.toByteFromHex("00112233445566778899AABBCCDDEEFF");
+		//final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000");
+		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C");
 		final Cipher cipherDecrypt = CryptoUtil.getAESCipherDecrypt(aesKey, aesLocalIV);
 		
+		log.debug("\n\ntestDecryptPacket: 01\n");
 		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000B721,0000,00"
-		//Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB".toLowerCase())));
+		Util.logPacket("HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000B721,0000,00".getBytes());
+		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB")));
 		
+
+		log.debug("\n\ntestDecryptPacket: 02\n");
 		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000F1DD,0000,00"
-		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("F931D53FFC21BB5B58226FB971176BD0D44F5476C99E1274EDB84F42B9F1F3B5619029E899F269E97175B854A38379A1CB0A454C78038A692C7708".toLowerCase())));
+		Util.logPacket("HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000F1DD,0000,00".getBytes());
+		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("F931D53FFC21BB5B58226FB971176BD0D44F5476C99E1274EDB84F42B9F1F3B5619029E899F269E97175B854A38379A1CB0A454C78038A692C7708")));
+		
+
+		log.debug("\n\ntestDecryptPacket: 03\n");
+		// Should be "E31E00F,0000,00038E03,FF,FFCA,2D844131E00F000000010BC8"
+		Util.logPacket("E31E00F,0000,00038E03,FF,FFCA,2D844131E00F000000010BC8".getBytes());
+		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("5707B416045BB9B6D81D0E1638BC69EF12838193379599372FCE56A9468958BA4F743E30923852EAE23CFA658F15C8C4ADFB40D5BE2B9F39")));
 	}
 
 	//@Test(timeOut=5000)
@@ -130,18 +139,18 @@ public class TestAES {
 		
 		final AtomicBoolean success = new AtomicBoolean(false);
 		
-		final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000");
-		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C");
+		final String aesRemoteIV = "30180C06C2E170B80000000000000000";
+		final String aesLocalIV = "86ED37816BD71C4B2D0E7092B1D8364C";
 		
-		log.debug("RemoteIV: " + Util.toHex(aesRemoteIV));
-		log.debug("LocalIV: " + Util.toHex(aesLocalIV));
+		log.debug("RemoteIV: " + aesRemoteIV);
+		log.debug("LocalIV: " + aesLocalIV);
 		
-		log.error("RemoteIV Packet: " + "V" + Util.toHex(aesRemoteIV));
+		log.error("RemoteIV Packet: " + "V" + aesRemoteIV);
 		
 		final DummySocketLink dummyLink = new DummySocketLink(aesRemoteIV, aesLocalIV);
 		dummyLink.setAESEnabled(true);
-		dummyLink.setAESLANKey(Util.toByteFromHex("00112233445566778899AABBCCDDEEFF"));
-		dummyLink.setAESRFKey(Util.toByteFromHex("00112233445566778899AABBCCDDEEFF"));
+		dummyLink.setAESLANKey("00112233445566778899AABBCCDDEEFF");
+		dummyLink.setAESRFKey("00112233445566778899AABBCCDDEEFF");
 		dummyLink.addLinkListener(new ILinkListener() {
 			
 			@Override

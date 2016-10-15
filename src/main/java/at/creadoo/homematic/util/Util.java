@@ -71,11 +71,11 @@ public class Util {
 	}
 	
 	public static String toHex(final byte data) {
-		return String.format("%02x", Byte.valueOf(data)).toLowerCase();
+		return String.format("%02x", Byte.valueOf(data)).toUpperCase();
 	}
 
 	public static String toHex(final int data) {
-		return String.format("%02x", Integer.valueOf(data)).toLowerCase();
+		return String.format("%02x", Integer.valueOf(data)).toUpperCase();
 	}
 
 	public static String toHex(final int[] data, final boolean prettyPrint) {
@@ -83,7 +83,7 @@ public class Util {
     }
 
 	public static String toHex(final long data) {
-		return String.format("%02x", Long.valueOf(data)).toLowerCase();
+		return String.format("%02x", Long.valueOf(data)).toUpperCase();
 	}
 	
 	public static String toHex(final String data) {
@@ -102,7 +102,7 @@ public class Util {
         final StringBuilder sb = new StringBuilder();
         for (byte aD : data) {
             final int val = 0xFF & (int) aD;
-            sb.append(String.format("%02x", val).toLowerCase());
+            sb.append(String.format("%02x", val).toUpperCase());
             if (prettyPrint) {
             	sb.append(" ");
             }
@@ -114,13 +114,14 @@ public class Util {
 		return toByteFromHex(toString(data));
 	}
     
-	public static byte[] toByteFromHex(final String s) {
-		int len = s.length();
-		byte[] data = new byte[len / 2];
+	public static byte[] toByteFromHex(final String data) {
+		final String temp = data.toLowerCase();
+		int len = temp.length();
+		byte[] result = new byte[len / 2];
 		for (int i = 0; i < len; i += 2) {
-			data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i + 1), 16));
+			result[i / 2] = (byte) ((Character.digit(temp.charAt(i), 16) << 4) + Character.digit(temp.charAt(i + 1), 16));
 		}
-		return data;
+		return result;
 	}
     
 	public static String toStringFromHex(final byte[] data) {

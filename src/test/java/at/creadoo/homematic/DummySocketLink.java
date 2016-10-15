@@ -6,8 +6,6 @@ import at.creadoo.homematic.util.Util;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
 
@@ -24,10 +22,10 @@ public class DummySocketLink extends SocketLink {
 		this.aesLocalIV = null;
 	}
 
-	public DummySocketLink(final byte[] remoteIV, final byte[] localIV) {
+	public DummySocketLink(final String remoteIV, final String localIV) {
 		super(null);
 		
-		this.remoteIV = remoteIV;
+		this.remoteIV = Util.toByteFromHex(remoteIV);
 		this.aesLocalIV = localIV;
 	}
 

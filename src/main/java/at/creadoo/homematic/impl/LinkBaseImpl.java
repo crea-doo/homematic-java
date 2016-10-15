@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import at.creadoo.homematic.ILink;
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.packets.HomeMaticPacket;
+import at.creadoo.homematic.util.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,10 +29,10 @@ public abstract class LinkBaseImpl implements ILink {
     
     protected boolean aesInitialized = false;
     
-    protected byte[] aesRfKey = null;
-    protected int aesRfKeyIndex = 1;
+    protected byte[] aesRFKey = null;
+    protected int aesRFKeyIndex = 1;
 
-    protected byte[] aesRfKeyOld = null;
+    protected byte[] aesRFKeyOld = null;
 
 	/**
 	 * Holds the values of the message counters for the destination devices
@@ -150,30 +151,37 @@ public abstract class LinkBaseImpl implements ILink {
 		this.aesEnabled = useAES;
 	}
 
-	protected byte[] getAESRFKey() {
-		return this.aesRfKey;
+	protected String getAESRFKey() {
+		if (this.aesRFKey != null) {
+			return Util.toHex(this.aesRFKey);
+		}
+		return null;
 	}
 
-	public void setAESRFKey(final byte[] aesRfKey) {
-		this.aesRfKey = aesRfKey;
+	public void setAESRFKey(final String aesRfKey) {
+		//TODO: Check for null, valid key length and hex format
+		this.aesRFKey = Util.toByteFromHex(aesRfKey);
 	}
 
 	protected int getAESRFKeyIndex() {
-		return this.aesRfKeyIndex;
+		return this.aesRFKeyIndex;
 	}
 
 	public void setAESRFKeyIndex(final int aesRfKeyIndex) {
 		if (aesRfKeyIndex > 0) {
-			this.aesRfKeyIndex = aesRfKeyIndex;
+			this.aesRFKeyIndex = aesRfKeyIndex;
 		}
 	}
 
-	protected byte[] getAESRFKeyOld() {
-		return this.aesRfKeyOld;
+	protected String getAESRFKeyOld() {
+		if (this.aesRFKeyOld != null) {
+			return Util.toHex(this.aesRFKeyOld);
+		}
+		return null;
 	}
 
 	public void setAESRFKeyOld(final byte[] aesRfKeyOld) {
-		this.aesRfKeyOld = aesRfKeyOld;
+		this.aesRFKeyOld = aesRfKeyOld;
 	}
 
 	protected abstract boolean setupAES();

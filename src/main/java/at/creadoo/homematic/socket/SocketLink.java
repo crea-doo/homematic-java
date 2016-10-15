@@ -82,17 +82,35 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 
 	private final Timer timer = new Timer();
 
-	protected byte[] aesLanKey = null;
+    /**
+     * Hexadecimal representation of the key used for en-/decrypting messages
+     */
+	protected String aesLanKey = null;
+
+    /**
+     * Hexadecimal representation of the key used for en-/decrypting messages
+     */
+	protected byte[] aesLanKeyByte = null;
 
     /**
      * Hexadecimal representation of the initialization vector sent from the gateway
      */
-    private byte[] aesRemoteIV = null;
+    private String aesRemoteIV = null;
+
+    /**
+     * Byte representation of the initialization vector sent from the gateway
+     */
+    private byte[] aesRemoteIVByte = null;
 
     /**
      * Hexadecimal representation of the initialization vector sent to the gateway
      */
-    protected byte[] aesLocalIV = null;
+    protected String aesLocalIV = null;
+
+    /**
+     * Byte representation of the initialization vector sent to the gateway
+     */
+    protected byte[] aesLocalIVByte = null;
     
     protected Cipher aesCipherEncrypt = null;
     
@@ -168,7 +186,8 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		timer.schedule(gatewayTime, RESET_GATEWAY_TIME_INTERVAL, RESET_GATEWAY_TIME_INTERVAL);
 
 		try {
-			setupGateway();
+			//TODO: Find another place to implement that with respect to encryption
+			//setupGateway();
 		} catch (Throwable ex) {
 			log.debug("Error initializing gateway", ex);
 			return false;
@@ -240,8 +259,8 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		
 		// Set current AES RF key
 		final String strAESKey;
-		if (getAESRFKey() != null && getAESRFKey().length > 0) {
-			strAESKey = "Y01," + Util.padLeft(Util.toHex(getAESRFKeyIndex()), 2, "0") + "," + Util.toHex(getAESRFKey());
+		if (getAESRFKey() != null && getAESRFKey().length() > 0) {
+			strAESKey = "Y01," + Util.padLeft(Util.toHex(getAESRFKeyIndex()), 2, "0") + "," + getAESRFKey();
 		} else {
 			strAESKey = "Y01,00,";
 		}
@@ -249,14 +268,14 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 
 		// Set previous AES RF key
 		final String strAESKeyOld;
-		if (getAESRFKeyOld() != null && getAESRFKeyOld().length > 0) {
-			strAESKeyOld = "Y02," + Util.padLeft(Util.toHex(getAESRFKeyIndex() - 1), 2, "0") + "," + Util.toHex(getAESRFKey());
+		if (getAESRFKeyOld() != null && getAESRFKeyOld().length() > 0) {
+			strAESKeyOld = "Y02," + Util.padLeft(Util.toHex(getAESRFKeyIndex() - 1), 2, "0") + "," + getAESRFKey();
 		} else {
 			strAESKeyOld = "Y02,00,";
 		}
 		send(strAESKeyOld);
 
-		// Set a third AES RF key is not supported
+		// Setting a third AES RF key is not supported
 		send("Y03,00,");
 		
 		// Set current date/time
@@ -294,16 +313,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
                 	log.error("Decryption not working due to missing cipher");
                 	packet = data;
                 } else {
-                	final String temp = Util.toHex(data).toLowerCase();
+                	//final String temp = Util.toHex(data);
                 	//log.debug("TEMP: " + temp);
                 	//packet = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
-                	packet = CryptoUtil.aesCrypt(this.aesCipherDecrypt, Util.toByteFromHex(temp));
+                	packet = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
                 }
 
             	log.debug("Decrypted packet >>");
                 Util.logPacket(this, packet);
             	log.debug("<<");
-			} catch (Exception ex) {
+			} catch (Throwable ex) {
 				log.error("Error while decrypting", ex);
 				return;
 			}
@@ -344,18 +363,22 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
         		return;
         	}
 		} else if (c == 'V' && getAESEnabled()) {
-			final String remoteIV = Util.toString(Util.subset(packet, 1)).toLowerCase();
-			log.debug("Received info from 'HM-CFG-LAN': [" + remoteIV + "]");
+			final String remoteIV = Util.toString(Util.subset(packet, 1));
 	        
-	        this.aesRemoteIV = Util.toByteFromHex(remoteIV);
+	        this.aesRemoteIV = remoteIV;
+	        this.aesRemoteIVByte = Util.toByteFromHex(remoteIV);
 	        
-	        if (this.aesRemoteIV.length != 16) {
+			log.debug("Received RemoteIV from 'HM-CFG-LAN': [" + this.aesRemoteIV + "]");
+	        
+	        if (this.aesRemoteIVByte.length != 16) {
 				log.warn("RemoteIV received from HM-CFG-LAN not in hexadecimal format: " + Util.toHex(packet));
 				return;
 	        }
 	        
+	        //TODO: Check if really is hex
+	        
     		try {
-	    		this.aesCipherEncrypt = CryptoUtil.getAESCipherEncrypt(aesLanKey, this.aesRemoteIV);
+	    		this.aesCipherEncrypt = CryptoUtil.getAESCipherEncrypt(this.aesLanKeyByte, this.aesRemoteIVByte);
 			} catch (Throwable ex) {
 				log.error("Error while setting up AES", ex);
 				closeLink();
@@ -363,8 +386,8 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			}
     		
     		try {
-    			log.debug("Send LocalIV to 'HM-CFG-LAN': [" + Util.toHex(this.aesLocalIV) + "]");
-    			final String response = "V" + Util.toHex(this.aesLocalIV);
+    			log.debug("Send LocalIV to 'HM-CFG-LAN': [" + this.aesLocalIV + "]");
+    			final String response = "V" + this.aesLocalIV.toUpperCase();
     			send(response.getBytes());
     		} catch(IOException ex) {
     			log.error("Error while setting up AES", ex);
@@ -420,10 +443,38 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			log.error("Sending not possible. Socket is null.");
 			return false;
 		}
+		
+
+		final byte[] packet;
+		//TODO: Implement encryption
+        if (getAESEnabled() && this.aesInitialized) {
+        	log.debug("Encrypt packet");
+        	try {
+            	log.debug("Plain packet >>");
+                Util.logPacket(this, data);
+            	log.debug("<<");
+                if (this.aesCipherEncrypt == null) {
+                	log.error("Encryption not working due to missing cipher");
+                	packet = Util.appendItem(data, EOL);
+                } else {
+                	packet = CryptoUtil.aesCrypt(this.aesCipherEncrypt, Util.appendItem(data, EOL));
+                }
+
+            	log.debug("Encrypted packet >>");
+                Util.logPacket(this, packet);
+            	log.debug("<<");
+			} catch (Throwable ex) {
+				log.error("Error while decrypting", ex);
+				return false;
+			}
+        	
+        } else {
+        	packet = Util.appendItem(data, EOL);
+        }
+		
 		try {
 			final OutputStream out = socket.getOutputStream();
-			out.write(data);
-			out.write(EOL);
+			out.write(packet);
 			out.flush();
 			log.debug("Sending packet: '" + Util.toString(data) + "'");
 		} catch (IOException ex) {
@@ -461,14 +512,15 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	protected boolean setupAES() {
     	if (this.getAESEnabled()) {
     		if (this.aesLocalIV == null) {
-    			this.aesLocalIV = Util.toByteFromHex(Util.randomHex(32).toLowerCase());
+    			this.aesLocalIV = Util.randomHex(32).toUpperCase();
+    			this.aesLocalIVByte = Util.toByteFromHex(this.aesLocalIV);
     		}
 
-			log.debug("LanKey for 'HM-CFG-LAN': [" + Util.toHex(this.aesLanKey) + "]");
-			log.debug("LocalIV for 'HM-CFG-LAN': [" + Util.toHex(this.aesLocalIV) + "]");
+			log.debug("LanKey for 'HM-CFG-LAN': [" + this.aesLanKey + "]");
+			log.debug("LocalIV for 'HM-CFG-LAN': [" + this.aesLocalIV + "]");
 			
     		try {
-	    		this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKey, this.aesLocalIV);
+	    		this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKeyByte, this.aesLocalIVByte);
 			} catch (Throwable ex) {
 				log.error("Error while setting up AES", ex);
 				return false;
@@ -481,17 +533,21 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     protected void cleanUpAES() {
     	this.aesInitialized = false;
     	this.aesRemoteIV = null;
+    	this.aesRemoteIVByte = null;
     	this.aesLocalIV = null;
+    	this.aesLocalIVByte = null;
     	this.aesCipherDecrypt = null;
     	this.aesCipherEncrypt = null;
     }
 	
 	private void sendInitCommands() {
-		
+		//TODO
 	}
 	
-	public void setAESLANKey(final byte[] aesLanKey) {
+	public void setAESLANKey(final String aesLanKey) {
+		//TODO: Check for null, valid key length and hex format
 		this.aesLanKey = aesLanKey;
+		this.aesLanKeyByte = Util.toByteFromHex(aesLanKey);
 	}
 
 	public int getFirmwareVersion() {

@@ -43,10 +43,10 @@ class SocketListener implements Runnable {
 			if (callback != null) {
 				callback.connectionTerminated();
 			}
+		} finally {
+			// Close the stream reader
+			IOUtils.closeQuietly(bufferedReader);
 		}
-
-		// Close the stream reader
-		IOUtils.closeQuietly(bufferedReader);
 		
 		log.debug(Thread.currentThread().getName() + " : Stopping to observe");
 	}
