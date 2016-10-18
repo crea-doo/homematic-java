@@ -6,7 +6,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Security;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -20,8 +19,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import at.creadoo.homematic.ILinkListener;
-import at.creadoo.homematic.packets.HomeMaticPacket;
 import at.creadoo.homematic.util.CryptoUtil;
 import at.creadoo.homematic.util.Util;
 
@@ -104,88 +101,5 @@ public class TestAES {
 	private byte[] AESDecrypt(final byte[] encryptionKey, final byte[] initializationVector, final byte[] testVector) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
 		final Cipher cipherDecrypt = CryptoUtil.getAESCipherDecrypt(encryptionKey, initializationVector);
 		return CryptoUtil.aesCrypt(cipherDecrypt, testVector);
-	}
-	
-	@Test
-	public void testDecryptPacket1() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException, UnsupportedEncodingException, NoSuchProviderException, Exception {
-		log.debug("testDecryptPacket");
-
-		final byte[] aesKey = Util.toByteFromHex("00112233445566778899AABBCCDDEEFF");
-		//final byte[] aesRemoteIV = Util.toByteFromHex("30180C06C2E170B80000000000000000");
-		final byte[] aesLocalIV = Util.toByteFromHex("86ED37816BD71C4B2D0E7092B1D8364C");
-		final Cipher cipherDecrypt = CryptoUtil.getAESCipherDecrypt(aesKey, aesLocalIV);
-		
-		log.debug("\n\ntestDecryptPacket: 01\n");
-		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000B721,0000,00"
-		Util.logPacket("HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000B721,0000,00".getBytes());
-		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB")));
-		
-
-		log.debug("\n\ntestDecryptPacket: 02\n");
-		// Should be "HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000F1DD,0000,00"
-		Util.logPacket("HHM-LAN-IF,03C4,JEQ0706166,1EA2B9,FD666A,0000F1DD,0000,00".getBytes());
-		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("F931D53FFC21BB5B58226FB971176BD0D44F5476C99E1274EDB84F42B9F1F3B5619029E899F269E97175B854A38379A1CB0A454C78038A692C7708")));
-		
-
-		log.debug("\n\ntestDecryptPacket: 03\n");
-		// Should be "E31E00F,0000,00038E03,FF,FFCA,2D844131E00F000000010BC8"
-		Util.logPacket("E31E00F,0000,00038E03,FF,FFCA,2D844131E00F000000010BC8".getBytes());
-		Util.logPacket(CryptoUtil.aesCrypt(cipherDecrypt, Util.toByteFromHex("5707B416045BB9B6D81D0E1638BC69EF12838193379599372FCE56A9468958BA4F743E30923852EAE23CFA658F15C8C4ADFB40D5BE2B9F39")));
-	}
-
-	//@Test(timeOut=5000)
-	public void testAESWithDummyLink() throws InterruptedException {
-		log.debug("testAESWithDummyLink");
-		
-		final AtomicBoolean success = new AtomicBoolean(false);
-		
-		final String aesRemoteIV = "30180C06C2E170B80000000000000000";
-		final String aesLocalIV = "86ED37816BD71C4B2D0E7092B1D8364C";
-		
-		log.debug("RemoteIV: " + aesRemoteIV);
-		log.debug("LocalIV: " + aesLocalIV);
-		
-		log.error("RemoteIV Packet: " + "V" + aesRemoteIV);
-		
-		final DummySocketLink dummyLink = new DummySocketLink(aesRemoteIV, aesLocalIV);
-		dummyLink.setAESEnabled(true);
-		dummyLink.setAESLANKey("00112233445566778899AABBCCDDEEFF");
-		dummyLink.setAESRFKey("00112233445566778899AABBCCDDEEFF");
-		dummyLink.addLinkListener(new ILinkListener() {
-			
-			@Override
-			public void received(final HomeMaticPacket packet) {
-				/*
-				if (dummyLink.getAESEnabled()) {
-					char c = (char) packet.getData()[0];
-					if (c == 'V') {
-						final byte[] subset = Util.subset(packet.getData(), 1);
-						log.debug("Received remoteIV: [" + Util.toString(subset) + "]");
-					}
-				} else {
-					Util.logPacket(dummyLink, packet.getData());
-				}
-
-				success.getAndSet(true);
-				*/
-			}
-			
-			@Override
-			public void close() {
-				//
-			}
-		});
-		dummyLink.start();
-		
-		Thread.sleep(1000);
-		
-		//dummyLink.received(new String("V" + Util.toHex(aesRemoteIV)).getBytes());
-		dummyLink.received(Util.toByteFromHex("6DB0CFF905BD91A299B861BBE503659F7B37FADAB4DD30ECE3ABAF6D2D75E2799DA5A3443C3301D9A6106280FD63465231AD9A53E3E872AC0BC8AB"));
-		
-		/*
-		while (!success.get()) {
-			Thread.sleep(100);
-		}
-		*/
 	}
 }
