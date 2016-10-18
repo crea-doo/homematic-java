@@ -186,8 +186,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		timer.schedule(gatewayTime, RESET_GATEWAY_TIME_INTERVAL, RESET_GATEWAY_TIME_INTERVAL);
 
 		try {
-			//TODO: Find another place to implement that with respect to encryption
-			//setupGateway();
+			setupGateway();
 		} catch (Throwable ex) {
 			log.debug("Error initializing gateway", ex);
 			return false;
@@ -311,12 +310,14 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
             	log.debug("<<");
                 if (this.aesCipherDecrypt == null) {
                 	log.error("Decryption not working due to missing cipher");
-                	packet = data;
+                	// Only strip EOL marker
+                	packet = Util.strip(data, EOL);
                 } else {
-                	//final String temp = Util.toHex(data);
-                	//log.debug("TEMP: " + temp);
-                	//packet = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
-                	packet = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
+                	// Decrypt data
+                	final byte[] decrypted = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
+                	// Strip EOL marker
+                	packet = Util.strip(decrypted, EOL);
+                	
                 }
 
             	log.debug("Decrypted packet >>");
@@ -328,10 +329,11 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			}
         } else {
         	log.debug("Treating packet as plain");
-            packet = data;
+        	// Strip EOL marker
+            packet = Util.strip(data, EOL);
 
         	log.debug("Plain packet >>");
-            Util.logPacket(this, data);
+            Util.logPacket(this, packet);
         	log.debug("<<");
         }
         
@@ -397,7 +399,13 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     		
     		this.aesInitialized = true;
     		
-    		sendInitCommands();
+    		try {
+				setupGateway();
+			} catch (SocketException ex) {
+				log.error("Error while initializing gateway", ex);
+			} catch (IOException ex) {
+				log.error("Error while initializing gateway", ex);
+			}
 	        
 		} else if (c == 'V' && !getAESEnabled()) {
 			log.error("Device 'HM-CFG-LAN' requires AES, but AES was not configured!");
@@ -539,10 +547,6 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     	this.aesCipherDecrypt = null;
     	this.aesCipherEncrypt = null;
     }
-	
-	private void sendInitCommands() {
-		//TODO
-	}
 	
 	public void setAESLANKey(final String aesLanKey) {
 		//TODO: Check for null, valid key length and hex format

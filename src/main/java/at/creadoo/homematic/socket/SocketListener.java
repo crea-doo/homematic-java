@@ -4,6 +4,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import at.creadoo.homematic.MessageCallback;
+import at.creadoo.homematic.util.PacketUtil;
+import at.creadoo.homematic.util.Util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,22 +32,21 @@ class SocketListener implements Runnable {
 	public void run() {
 		log.debug(Thread.currentThread().getName() + " : Starting to observe");
 
-		BufferedReader bufferedReader = null;
+		
 		try {
-			bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-			String line;
-			while ((line = bufferedReader.readLine()) != null) {
-				log.debug(this.getClass().getSimpleName() +  " received: " + line);
-				callback.received(line.getBytes());
-			}
-		} catch (final IOException ex) {
-			log.error("IP thread exception", ex);
+    		while (running.get()) {
+    			final byte[] data = PacketUtil.readLine(socket.getInputStream());
+    			if (data != null) {
+    				callback.received(data);
+        		} else {
+        			log.debug("No valid packet received!");
+        		}
+    		}
+		} catch (Throwable ex) {
+			log.error(Thread.currentThread().getName() + ": Error in listener thread", ex);
 			if (callback != null) {
 				callback.connectionTerminated();
 			}
-		} finally {
-			// Close the stream reader
-			IOUtils.closeQuietly(bufferedReader);
 		}
 		
 		log.debug(Thread.currentThread().getName() + " : Stopping to observe");

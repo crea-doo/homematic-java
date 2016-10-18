@@ -148,6 +148,51 @@ public class Util {
 		return result;
 	}
 
+	public static int[] subset(final int[] data, final int start) {
+		return subset(data, start, data.length - 1);
+	}
+
+	public static int[] subset(final int[] data, final int start, final int end) {
+		if (data == null || start < 0 || end < start || end >= data.length) {
+			return null;
+		}
+		
+		int[] result = new int[end - start + 1];
+		for (int i = start; i <= end; i++) {
+			result[i - start] = data[i];
+		}
+		return result;
+	}
+
+	public static boolean endsWith(final byte[] data, final byte[] marker) {
+		if (data == null || marker == null || data.length < marker.length) {
+			return false;
+		}
+		
+		boolean result = true;
+		int offset = data.length - marker.length;
+		for (int i = 0; i < marker.length; i++) {
+			if (data[offset + i] != marker[i]) {
+				result = false;
+				break;
+			}
+		}
+		return result;
+	}
+
+	public static byte[] strip(final byte[] data, final byte[] marker) {
+		if (data == null || marker == null) {
+			return null;
+		}
+		
+		if (endsWith(data, marker)) {
+			final byte[] result = new byte[data.length - marker.length];
+			System.arraycopy(data, 0, result, 0, data.length - marker.length);
+			return result;
+		}
+		return data;
+	}
+
 	public static String toString(final byte[] data) {
 		if (data == null || data.length <= 0) {
 			return "";
@@ -165,6 +210,25 @@ public class Util {
 			return "";
 		}
 		return new String(result);
+	}
+
+	public static String toString(final int[] data) {
+		if (data == null || data.length <= 0) {
+			return "";
+		}
+		return toString(data, 0, data.length - 1);
+	}
+
+	public static String toString(final int[] data, final int start) {
+		return toString(data, start, data.length);
+	}
+
+	public static String toString(final int[] data, final int start, final int end) {
+		int[] result = subset(data, start, end);
+		if (result == null || result.length <= 0) {
+			return "";
+		}
+		return new String(toByteArray(result));
 	}
 	
 	public static String padRight(final String data, final int size, final String padChar) {
