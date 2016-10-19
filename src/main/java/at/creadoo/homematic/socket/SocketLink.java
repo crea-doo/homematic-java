@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -185,11 +186,13 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		timer.schedule(keepAlive, keepAliveInterval, keepAliveInterval);
 		timer.schedule(gatewayTime, RESET_GATEWAY_TIME_INTERVAL, RESET_GATEWAY_TIME_INTERVAL);
 
-		try {
-			setupGateway();
-		} catch (Throwable ex) {
-			log.debug("Error initializing gateway", ex);
-			return false;
+		if (!this.getAESEnabled()) {
+			try {
+				setupGateway();
+			} catch (Throwable ex) {
+				log.error("Error initializing gateway", ex);
+				return false;
+			}
 		}
 		
 		return true;
@@ -299,7 +302,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 
     @Override
     public void received(final byte[] data) {
-    	final byte[] packet;
+    	final List<byte[]> packets;
     	
         if (getAESEnabled() && this.aesInitialized) {
         	log.debug("Treating packet as encrypted");
@@ -310,33 +313,37 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
             	log.debug("<<");
                 if (this.aesCipherDecrypt == null) {
                 	log.error("Decryption not working due to missing cipher");
-                	// Only strip EOL marker
-                	packet = Util.strip(data, EOL);
+                	return;
                 } else {
                 	// Decrypt data
+                	this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKeyByte, this.aesLocalIVByte);
                 	final byte[] decrypted = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
-                	// Strip EOL marker
-                	packet = Util.strip(decrypted, EOL);
-                	
+                	packets = Util.split(decrypted, EOL);
                 }
-
-            	log.debug("Decrypted packet >>");
-                Util.logPacket(this, packet);
-            	log.debug("<<");
 			} catch (Throwable ex) {
 				log.error("Error while decrypting", ex);
 				return;
 			}
         } else {
-        	log.debug("Treating packet as plain");
-        	// Strip EOL marker
-            packet = Util.strip(data, EOL);
+        	// Add plain packet
+        	packets = Util.split(data, EOL);
+        }
 
-        	log.debug("Plain packet >>");
+    	for (byte[] packet : packets) {
+        	log.debug("Packet >>");
             Util.logPacket(this, packet);
         	log.debug("<<");
-        }
-        
+        	
+        	try {
+        		processData(data);
+        	} catch (Throwable ex) {
+        		log.error("Error while processing packets", ex);
+        	}
+    	}
+    }
+
+    public void processData(final byte[] data) {
+    	final byte[] packet = Util.strip(data, EOL);
     	final String[] parts = new String(packet).split(",");
         
         char c = (char) packet[0];
@@ -401,12 +408,10 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     		
     		try {
 				setupGateway();
-			} catch (SocketException ex) {
-				log.error("Error while initializing gateway", ex);
-			} catch (IOException ex) {
-				log.error("Error while initializing gateway", ex);
+			} catch (Throwable ex) {
+				log.error("Error initializing gateway", ex);
+				close();
 			}
-	        
 		} else if (c == 'V' && !getAESEnabled()) {
 			log.error("Device 'HM-CFG-LAN' requires AES, but AES was not configured!");
 			return;

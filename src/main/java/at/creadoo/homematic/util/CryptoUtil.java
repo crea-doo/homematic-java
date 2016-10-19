@@ -1,9 +1,6 @@
 package at.creadoo.homematic.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
@@ -13,7 +10,6 @@ import java.security.NoSuchProviderException;
 import java.security.Security;
 
 import javax.crypto.Cipher;
-import javax.crypto.CipherOutputStream;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -47,26 +43,6 @@ public class CryptoUtil {
 
 	public static byte[] aesCrypt(final Cipher cipher, final byte[] plain) throws GeneralSecurityException, IOException {
 		return cipher.doFinal(plain);
-		//return aesCrypt(cipher, new ByteArrayInputStream(plain));
 	}
-
-	/*
-	public static byte[] aesCrypt(final Cipher cipher, final InputStream input) throws GeneralSecurityException, IOException {
-		byte[] byteBuffer = new byte[64 * 1024];
-		int n;
-		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		final CipherOutputStream cos = new CipherOutputStream(baos, cipher);
-		try {
-			while ((n = input.read(byteBuffer)) > 0) {
-				cos.write(byteBuffer, 0, n);
-			}
-		} finally {
-			cos.close();
-			baos.close();
-			input .close();
-		}
-		return baos.toByteArray();
-	}
-	*/
 
 }

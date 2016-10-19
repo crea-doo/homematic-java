@@ -5,11 +5,8 @@ import org.apache.log4j.Logger;
 
 import at.creadoo.homematic.MessageCallback;
 import at.creadoo.homematic.util.PacketUtil;
-import at.creadoo.homematic.util.Util;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -31,7 +28,6 @@ class SocketListener implements Runnable {
 	@Override
 	public void run() {
 		log.debug(Thread.currentThread().getName() + " : Starting to observe");
-
 		
 		try {
     		while (running.get()) {
@@ -92,11 +88,12 @@ class SocketListener implements Runnable {
 		}
 		try {
 			// open the socket for writing
-			OutputStreamWriter out = new OutputStreamWriter(socket.getOutputStream());
+			final OutputStreamWriter out = new OutputStreamWriter(socket.getOutputStream());
 			// write telegram string to the socket
 			out.write(new String(buf));
 			// force sending it
 			out.flush();
+			IOUtils.closeQuietly(out);
 			log.debug("Sending packet over IP");
 		} catch (IOException ex) {
 			log.error("Error writing data to socket: IO exception", ex);

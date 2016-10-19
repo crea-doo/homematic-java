@@ -1,9 +1,11 @@
 package at.creadoo.homematic.util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -175,6 +177,70 @@ public class Util {
 			if (data[offset + i] != marker[i]) {
 				result = false;
 				break;
+			}
+		}
+		return result;
+	}
+	
+	public static List<byte[]> split(final byte[] data, final byte[] marker) {
+		final List<byte[]> result = new ArrayList<byte[]>();
+
+		int index = -1;
+		int offset = 0;
+		do {
+			index = indexOf(data, marker, offset);
+			
+			if (index >= 0) {
+				final byte[] part = new byte[index - offset];
+				System.arraycopy(data, offset, part, 0, index - offset);
+				result.add(part);
+				
+				// Set new offset
+				offset = index + marker.length;
+			}
+		} while(index > 0 && offset < (data.length - marker.length));
+		
+		// Append final part
+		if (data.length - offset > 0) {
+			final byte[] part = new byte[data.length - offset];
+			System.arraycopy(data, offset, part, 0, data.length - offset);
+			result.add(part);
+		}
+		
+		return result;
+	}
+
+	public static int indexOf(final byte[] data, final byte[] marker) {
+		return indexOf(data, marker, 0);
+	}
+	
+	public static int indexOf(final byte[] data, final byte[] marker, final int offset) {
+		if (data == null || marker == null || data.length < marker.length || offset < 0 || offset > data.length) {
+			return -1;
+		}
+
+		int result = -1;
+		for (int i = offset; i < data.length; i++) {
+			if (i > (data.length - marker.length)) {
+				break;
+			}
+			
+			if (data[i] == marker[0]) {
+				boolean matching = true;
+				
+				if (marker.length >= 1) {
+					for (int j = 1; j < marker.length; j++) {
+						if (data[i + j] != marker[j]) {
+							matching = false;
+							break;
+						}
+					}
+				}
+				
+				if (matching) {
+					result = i;
+					return result;
+				}
 			}
 		}
 		return result;
