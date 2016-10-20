@@ -157,10 +157,14 @@ public abstract class LinkBaseImpl implements ILink {
 		}
 		return null;
 	}
-
-	public void setAESRFKey(final String aesRfKey) {
-		//TODO: Check for null, valid key length and hex format
+	
+	public boolean setAESRFKey(final String aesRfKey) {
+		if (aesRfKey == null || aesRfKey.length() != 32 || !Util.isHex(aesRfKey)) {
+			return false;
+		}
+		
 		this.aesRFKey = Util.toByteFromHex(aesRfKey);
+		return true;
 	}
 
 	protected int getAESRFKeyIndex() {

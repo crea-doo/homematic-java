@@ -84,6 +84,11 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	private final Timer timer = new Timer();
 
     /**
+     * Hexadecimal representation of the cenztral address to be used
+     */
+	protected String centralAddress = null;
+
+    /**
      * Hexadecimal representation of the key used for en-/decrypting messages
      */
 	protected String aesLanKey = null;
@@ -256,6 +261,11 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	 * @throws SocketException 
 	 */
 	private final void setupGateway() throws SocketException, IOException {
+		// Set central address
+		if (this.centralAddress != null) {
+			send("A" + this.centralAddress);
+		}
+		
 		// Clear settings
 		send("C");
 		
@@ -316,7 +326,6 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
                 	return;
                 } else {
                 	// Decrypt data
-                	this.aesCipherDecrypt = CryptoUtil.getAESCipherDecrypt(this.aesLanKeyByte, this.aesLocalIVByte);
                 	final byte[] decrypted = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
                 	packets = Util.split(decrypted, EOL);
                 }
@@ -379,12 +388,10 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	        
 			log.debug("Received RemoteIV from 'HM-CFG-LAN': [" + this.aesRemoteIV + "]");
 	        
-	        if (this.aesRemoteIVByte.length != 16) {
+	        if (Util.isHex(this.aesRemoteIV) || this.aesRemoteIVByte.length != 16) {
 				log.warn("RemoteIV received from HM-CFG-LAN not in hexadecimal format: " + Util.toHex(packet));
 				return;
 	        }
-	        
-	        //TODO: Check if really is hex
 	        
     		try {
 	    		this.aesCipherEncrypt = CryptoUtil.getAESCipherEncrypt(this.aesLanKeyByte, this.aesRemoteIVByte);
@@ -457,9 +464,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			return false;
 		}
 		
-
 		final byte[] packet;
-		//TODO: Implement encryption
         if (getAESEnabled() && this.aesInitialized) {
         	log.debug("Encrypt packet");
         	try {
@@ -477,10 +482,9 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
                 Util.logPacket(this, packet);
             	log.debug("<<");
 			} catch (Throwable ex) {
-				log.error("Error while decrypting", ex);
+				log.error("Error while encrypting", ex);
 				return false;
 			}
-        	
         } else {
         	packet = Util.appendItem(data, EOL);
         }
@@ -553,10 +557,23 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     	this.aesCipherEncrypt = null;
     }
 	
-	public void setAESLANKey(final String aesLanKey) {
-		//TODO: Check for null, valid key length and hex format
+	public boolean setCentralAddress(final String centralAddress) {
+		if (centralAddress == null || centralAddress.length() != 6 || !Util.isHex(centralAddress)) {
+			return false;
+		}
+		
+		this.centralAddress = centralAddress;
+		return true;
+	}
+	
+	public boolean setAESLANKey(final String aesLanKey) {
+		if (aesLanKey == null || aesLanKey.length() != 32 || !Util.isHex(aesLanKey)) {
+			return false;
+		}
+		
 		this.aesLanKey = aesLanKey;
 		this.aesLanKeyByte = Util.toByteFromHex(aesLanKey);
+		return true;
 	}
 
 	public int getFirmwareVersion() {

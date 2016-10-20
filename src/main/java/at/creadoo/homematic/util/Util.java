@@ -72,6 +72,13 @@ public class Util {
 		return result;
 	}
 	
+	public static boolean isHex(final String data) {
+		if (data == null) {
+			return false;
+		}
+		return data.matches("\\p{XDigit}+");
+	}
+	
 	public static String toHex(final byte data) {
 		return String.format("%02x", Byte.valueOf(data)).toUpperCase();
 	}
