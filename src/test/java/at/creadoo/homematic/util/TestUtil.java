@@ -39,4 +39,14 @@ public class TestUtil {
 		Assert.assertEquals(Util.padRight("Test", 8, "0"), "Test0000");
 		Assert.assertEquals(Util.padRight("Test", 8, '0'), "Test0000");
 	}
+	
+	@Test
+	public void testHex() {
+		Assert.assertEquals(Util.isHex("3C1E0F07B8DC6EB70000000000000000"), true);
+	}
+	
+	@Test
+	public void testByteToHex() {
+		Assert.assertEquals(Util.toByteFromHex("3C1E0F07B8DC6EB70000000000000000").length, 16);
+	}
 }

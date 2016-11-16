@@ -20,6 +20,7 @@ import at.creadoo.homematic.MessageCallback;
 import at.creadoo.homematic.impl.LinkBaseImpl;
 import at.creadoo.homematic.packets.HomeMaticPacket;
 import at.creadoo.homematic.util.CryptoUtil;
+import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
 
 public class SocketLink extends LinkBaseImpl implements MessageCallback {
@@ -198,9 +199,18 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 				log.error("Error initializing gateway", ex);
 				return false;
 			}
+		} else {
+			// Wait for AES initialized
+			try {
+				while (!this.aesInitialized) {
+					Thread.sleep(100);
+				}
+			} catch (InterruptedException ex) {
+				log.error("Error while waiting AES to be initialized", ex);
+			}
 		}
 		
-		return true;
+		return isConnected();
 	}
 
 	@Override
@@ -261,13 +271,13 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	 * @throws SocketException 
 	 */
 	private final void setupGateway() throws SocketException, IOException {
+		// Clear settings
+		send("C");
+		
 		// Set central address
 		if (this.centralAddress != null) {
 			send("A" + this.centralAddress);
 		}
-		
-		// Clear settings
-		send("C");
 		
 		// Set current AES RF key
 		final String strAESKey;
@@ -304,8 +314,10 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	private final void setupGatewayTime() throws SocketException, IOException {
 		final TimeZone tz = TimeZone.getDefault();
 		final long now = new Date().getTime();
-		final int gmtOffset = tz.getOffset(now) / 1000 / 60 / 60;
-		final long secondsSince2000 = (now / 1000) - 946684800;
+		//final int gmtOffset = tz.getOffset(now) / 1000 / 60 / 60;
+		final int gmtOffset = tz.getOffset(now) / 1000 / 1800;
+		// Add one second for processing time
+		final long secondsSince2000 = (now / 1000) - 946684800 + 1;
 		
 		send("T" + Util.padLeft(Util.toHex(secondsSince2000), 8, "0") + "," + Util.padLeft(Util.toHex(gmtOffset), 2, "0") + ",00,00000000");
 	}
@@ -319,7 +331,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 
         	try {
             	log.debug("Encrypted packet >>");
-                Util.logPacket(this, data);
+                PacketUtil.logPacket(this, data);
             	log.debug("<<");
                 if (this.aesCipherDecrypt == null) {
                 	log.error("Decryption not working due to missing cipher");
@@ -340,7 +352,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 
     	for (byte[] packet : packets) {
         	log.debug("Packet >>");
-            Util.logPacket(this, packet);
+        	PacketUtil.logPacket(this, packet);
         	log.debug("<<");
         	
         	try {
@@ -384,12 +396,12 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			final String remoteIV = Util.toString(Util.subset(packet, 1));
 	        
 	        this.aesRemoteIV = remoteIV;
-	        this.aesRemoteIVByte = Util.toByteFromHex(remoteIV);
+	        this.aesRemoteIVByte = Util.toByteFromHex(this.aesRemoteIV);
 	        
 			log.debug("Received RemoteIV from 'HM-CFG-LAN': [" + this.aesRemoteIV + "]");
 	        
-	        if (Util.isHex(this.aesRemoteIV) || this.aesRemoteIVByte.length != 16) {
-				log.warn("RemoteIV received from HM-CFG-LAN not in hexadecimal format: " + Util.toHex(packet));
+	        if (!Util.isHex(this.aesRemoteIV) || this.aesRemoteIVByte.length != 16) {
+				log.warn("RemoteIV received from HM-CFG-LAN not in hexadecimal format: " + this.aesRemoteIV);
 				return;
 	        }
 	        
@@ -397,7 +409,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	    		this.aesCipherEncrypt = CryptoUtil.getAESCipherEncrypt(this.aesLanKeyByte, this.aesRemoteIVByte);
 			} catch (Throwable ex) {
 				log.error("Error while setting up AES", ex);
-				closeLink();
+				close();
 				return;
 			}
     		
@@ -407,7 +419,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     			send(response.getBytes());
     		} catch(IOException ex) {
     			log.error("Error while setting up AES", ex);
-				closeLink();
+    			close();
 				return;
     		}
     		
@@ -423,7 +435,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 			log.error("Device 'HM-CFG-LAN' requires AES, but AES was not configured!");
 			return;
 		} else if (c == 'E' || c == 'R') {
-			final HomeMaticPacket homeMaticPacket = Util.createPacketByMessageType(Util.convertLANPacketToBidCos(packet));
+			final HomeMaticPacket homeMaticPacket = PacketUtil.createPacketByMessageType(PacketUtil.convertLANPacketToBidCos(packet));
 			if (homeMaticPacket == null) {
 	        	return;
 	        }
@@ -465,27 +477,35 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		}
 		
 		final byte[] packet;
-        if (getAESEnabled() && this.aesInitialized) {
-        	log.debug("Encrypt packet");
-        	try {
-            	log.debug("Plain packet >>");
-                Util.logPacket(this, data);
-            	log.debug("<<");
-                if (this.aesCipherEncrypt == null) {
-                	log.error("Encryption not working due to missing cipher");
-                	packet = Util.appendItem(data, EOL);
-                } else {
-                	packet = CryptoUtil.aesCrypt(this.aesCipherEncrypt, Util.appendItem(data, EOL));
-                }
-
-            	log.debug("Encrypted packet >>");
-                Util.logPacket(this, packet);
-            	log.debug("<<");
-			} catch (Throwable ex) {
-				log.error("Error while encrypting", ex);
-				return false;
-			}
+        if (getAESEnabled()) {
+        	if (this.aesInitialized) {
+            	// Encryption enabled and ready
+	        	log.debug("Encrypt packet");
+	        	try {
+	            	log.debug("Plain packet >>");
+	            	PacketUtil.logPacket(this, data);
+	            	log.debug("<<");
+	                if (this.aesCipherEncrypt == null) {
+	                	log.error("Encryption not working due to missing cipher");
+	                	packet = Util.appendItem(data, EOL);
+	                } else {
+	                	packet = CryptoUtil.aesCrypt(this.aesCipherEncrypt, Util.appendItem(data, EOL));
+	                }
+	
+	            	log.debug("Encrypted packet >>");
+	            	PacketUtil.logPacket(this, packet);
+	            	log.debug("<<");
+				} catch (Throwable ex) {
+					log.error("Error while encrypting", ex);
+					return false;
+				}
+            } else {
+            	// Encryption enabled but not yet ready
+	        	//log.debug("Trying to send packet but AES not initialized yet. Sending plain.");
+	        	packet = Util.appendItem(data, EOL);
+            }
         } else {
+        	// Encryption disabled
         	packet = Util.appendItem(data, EOL);
         }
 		

@@ -11,6 +11,7 @@ import at.creadoo.homematic.HomeMaticStatus;
 import at.creadoo.homematic.packets.HomeMaticPacket;
 import at.creadoo.homematic.packets.HomeMaticPacketEvent;
 import at.creadoo.homematic.packets.HomeMaticPacketInformation;
+import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
 
 public class TestPacket {
@@ -29,9 +30,9 @@ public class TestPacket {
 	
 	private HomeMaticPacket packetFromString(final String bytes) {
 		final byte[] b = Util.toByteFromHex(bytes.replace(" ", ""));
-		Util.logPacket(b);
+		PacketUtil.logPacket(b);
 		
-		final HomeMaticPacket p = Util.createPacket(b);
+		final HomeMaticPacket p = PacketUtil.createPacket(b);
 		if (p == null) {
 			return null;
 		}
@@ -44,7 +45,7 @@ public class TestPacket {
 	private HomeMaticPacket packetFromStringLAN(final String bytes) {
 		final byte[] b = Util.toByteFromHex(bytes.replace(" ", ""));
 		
-		final HomeMaticPacket p = Util.createPacketByMessageType(Util.convertLANPacketToBidCos(b));
+		final HomeMaticPacket p = PacketUtil.createPacketByMessageType(PacketUtil.convertLANPacketToBidCos(b));
 		if (p == null) {
 			return null;
 		}

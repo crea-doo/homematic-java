@@ -1,6 +1,7 @@
 package at.creadoo.homematic.packets;
 
 import at.creadoo.homematic.HomeMaticMessageType;
+import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
 
 /**
@@ -67,7 +68,7 @@ public class HomeMaticPacket {
 	
 	public HomeMaticPacket(final byte[] data, final int rssi) {
 		this(data);
-		this.rssi = Util.convertRSSI(rssi);
+		this.rssi = PacketUtil.convertRSSI(rssi);
 	}
 	
 	public HomeMaticPacket(final int messageCounter, final int controlByte, final int messageType, final int senderAddress, final int destinationAddress) {

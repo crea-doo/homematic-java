@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.MessageCallback;
 import at.creadoo.homematic.packets.HomeMaticPacket;
-import at.creadoo.homematic.util.Util;
+import at.creadoo.homematic.util.PacketUtil;
 
 import org.apache.log4j.Logger;
 import org.hid4java.HidDevice;
@@ -69,9 +69,9 @@ public class HidConnection implements MessageCallback  {
 
     @Override
     public void received(final byte[] packet) {
-        Util.logPacket(link, packet);
+    	PacketUtil.logPacket(link, packet);
         
-        final HomeMaticPacket homeMaticPacket = Util.createPacket(packet);        
+        final HomeMaticPacket homeMaticPacket = PacketUtil.createPacket(packet);        
         if (homeMaticPacket == null) {
         	return;
         }
