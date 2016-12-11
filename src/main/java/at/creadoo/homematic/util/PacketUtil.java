@@ -11,6 +11,7 @@ import at.creadoo.homematic.ILink;
 import at.creadoo.homematic.packets.HomeMaticPacket;
 import at.creadoo.homematic.packets.HomeMaticPacketEvent;
 import at.creadoo.homematic.packets.HomeMaticPacketInformation;
+import at.creadoo.homematic.packets.HomeMaticPacketRemote;
 import at.creadoo.homematic.packets.HomeMaticPacketSet;
 
 public final class PacketUtil {
@@ -190,6 +191,8 @@ public final class PacketUtil {
 			return new HomeMaticPacketEvent(data, rssi);
 		case INFORMATION:
 			return new HomeMaticPacketInformation(data, rssi);
+		case REMOTE:
+			return new HomeMaticPacketRemote(data, rssi);
 		case SET:
 			return new HomeMaticPacketSet(data, rssi);
 		default:

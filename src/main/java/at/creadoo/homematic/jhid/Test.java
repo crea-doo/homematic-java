@@ -17,9 +17,11 @@ public class Test {
 	private static final Logger log = Logger.getLogger(Test.class);
 
 	public static void main(final String[] args) {
+		/*
 		PacketUtil.logPacket(new HomeMaticPacket(0x26, 0x0, HomeMaticMessageType.EVENT, 0x31e00f, 0x0).getData());
 		PacketUtil.logPacket(new HomeMaticPacketEvent(0x26, 0x31e00f, 0x0, HomeMaticStatus.OFF).getData());
 		PacketUtil.logPacket(new HomeMaticPacketSet(0x26, 0x31e00f, 0x35366f, HomeMaticStatus.ON).getData());
+		*/
 		
 		final HidLink hardware = new HidLink();
 		hardware.setUsbProductId("0xC00F");
