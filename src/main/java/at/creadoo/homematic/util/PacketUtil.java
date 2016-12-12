@@ -168,9 +168,9 @@ public final class PacketUtil {
 			break;
 		default:
 			log.debug("Unkown message: [ " + Arrays.toString(data) + " ]");
+			break;
 		}
 		return null;
-
 	}
 	
 	public static HomeMaticPacket createPacketByMessageType(final byte[] data) {
@@ -185,20 +185,28 @@ public final class PacketUtil {
 		final int id = Util.toInt(data[3]);
 		log.debug("Message Type ID: " + id + " (0x" + Util.toHex(id) + ")");
 		final HomeMaticMessageType messageType = HomeMaticMessageType.getById(id);
+		final HomeMaticPacket homeMaticPacket;
 		
 		switch (messageType) {
 		case EVENT:
-			return new HomeMaticPacketEvent(data, rssi);
+			homeMaticPacket = new HomeMaticPacketEvent(data, rssi);
+			break;
 		case INFORMATION:
-			return new HomeMaticPacketInformation(data, rssi);
+			homeMaticPacket = new HomeMaticPacketInformation(data, rssi);
+			break;
 		case REMOTE:
-			return new HomeMaticPacketRemote(data, rssi);
+			homeMaticPacket = new HomeMaticPacketRemote(data, rssi);
+			break;
 		case SET:
-			return new HomeMaticPacketSet(data, rssi);
+			homeMaticPacket = new HomeMaticPacketSet(data, rssi);
+			break;
 		default:
 			log.debug("Packet type not found");
-			return null;
+			homeMaticPacket = null;
+			break;
 		}
+		
+		return homeMaticPacket;
 	}
 
     /**

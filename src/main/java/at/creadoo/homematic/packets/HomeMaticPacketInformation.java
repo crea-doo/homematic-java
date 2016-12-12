@@ -12,7 +12,7 @@ public class HomeMaticPacketInformation extends HomeMaticPacket {
 
 	private HomeMaticError error;
 
-	private boolean lowBat = false;
+	private boolean lowBat;
 
 	public HomeMaticPacketInformation(final int messageCounter, final int senderAddress, final int destinationAddress, final int status, final HomeMaticError error) {
 		this(messageCounter, 0, senderAddress, destinationAddress, status, error);

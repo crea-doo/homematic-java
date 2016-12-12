@@ -11,6 +11,7 @@ import at.creadoo.homematic.HomeMaticStatus;
 import at.creadoo.homematic.packets.HomeMaticPacket;
 import at.creadoo.homematic.packets.HomeMaticPacketEvent;
 import at.creadoo.homematic.packets.HomeMaticPacketInformation;
+import at.creadoo.homematic.packets.HomeMaticPacketRemote;
 import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
 
@@ -93,6 +94,21 @@ public class TestPacket {
 			Assert.assertFalse(i.getLowBat());
 			Assert.assertEquals(i.getStatus(), 200);
 			Assert.assertEquals(i.getError(), HomeMaticError.SABOTAGE);
+		} else {
+			Assert.fail("Wrong packet type");
+		}
+	}
+
+	@Test
+	public void testPacketRemote() {
+		log.debug("testPacketRemote");
+
+		final HomeMaticPacket p = packetFromString("45 33 73 A6 00 00 00 F0 4F 6C FF FF D9 0B B9 84 40 33 73 A6 00 00 00 01 B7 C8 0E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00");
+		if (p instanceof HomeMaticPacketRemote) {
+			final HomeMaticPacketRemote r = (HomeMaticPacketRemote) p;
+			Assert.assertEquals(r.getChannel(), 1);
+			Assert.assertFalse(r.getLongPress());
+			Assert.assertEquals(r.getCounter(), 183);
 		} else {
 			Assert.fail("Wrong packet type");
 		}

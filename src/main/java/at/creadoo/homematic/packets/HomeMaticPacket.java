@@ -8,7 +8,7 @@ import at.creadoo.homematic.util.Util;
  * Class for the storage of an incoming packet from the HomeMaticPacket radio
  * signal sender received by the HomeMaticPacket listener.
  */
-public class HomeMaticPacket {
+public abstract class HomeMaticPacket {
 	
 	public static final int MIN_PACKET_LEN = 9;
 	
@@ -175,11 +175,6 @@ public class HomeMaticPacket {
 		this.data = generateRawData();
 	}
 	
-	public final Long getHardwareId() {
-		//TODO: Return real hardware id
-		return null;
-	}
-	
 	final void setPayload(final int[] payload) {
 		if (payload != null) {
 			this.payload = payload;
@@ -197,9 +192,7 @@ public class HomeMaticPacket {
 	 * this method should be overridden when implementing a class that handles
 	 * packets of one type in a more specific way.
 	 */
-	protected String payloadToString() {
-		return null;
-	}
+	protected abstract String payloadToString();
 	
 	/**
 	 * This method is called when a packet is created out of an byte array and
@@ -207,9 +200,7 @@ public class HomeMaticPacket {
 	 * be overridden when implementing a class that handles packets of one type
 	 * in a more specific way.
 	 */
-	protected void parsePayload() {
-		return;
-	}
+	protected abstract void parsePayload();
 
 	/**
 	 * This method is called when a packet is built out of its stored values and
@@ -217,9 +208,7 @@ public class HomeMaticPacket {
 	 * implementing a class that handles packets of one type in a more specific
 	 * way.
 	 */
-	protected void generatePayload() {
-		return;
-	}
+	protected abstract void generatePayload();
 
 	/**
 	 * This method is called when a packet's contents is converted to a string
@@ -228,14 +217,14 @@ public class HomeMaticPacket {
 	@Override
 	public final String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("HomeMaticPacket [");
+		sb.append(this.getClass().getSimpleName() + " [");
 		sb.append("rssi=").append(rssi).append("dBm, ");
 		sb.append("length=").append(packetLength).append(", ");
 		sb.append("type=").append(messageType != null ? messageType.name() : ("0x" + Integer.toHexString(Util.toInt(this.data[3]))) + " (Unkown)").append(", ");
 		sb.append("sender=0x").append(Integer.toHexString(senderAddress)).append(", ");
 		sb.append("destination=0x").append(Integer.toHexString(destinationAddress)).append(", ");
 		sb.append("packet_number=0x").append(Integer.toHexString(messageCounter)).append(", ");
-		sb.append("payload_length=").append(payload != null ? payload.length : 0).append(", ");;
+		sb.append("payload_length=").append(payload != null ? payload.length : 0).append(", ");
 		final String sPayload = payloadToString();
 		if (sPayload == null || sPayload.isEmpty()) {
 			sb.append("payload= [ ");

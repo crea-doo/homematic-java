@@ -10,7 +10,7 @@ public class HomeMaticPacketEvent extends HomeMaticPacket {
 
 	private HomeMaticStatus status;
 
-	private boolean lowBat = false;
+	private boolean lowBat;
 
 	public HomeMaticPacketEvent() {
 		super(PAYLOAD_LEN);
@@ -54,16 +54,16 @@ public class HomeMaticPacketEvent extends HomeMaticPacket {
 
 	@Override
 	protected final void parsePayload() {
-		if (this.payload[2] == 0x00) {
+		if (payload[2] == 0x00) {
 			status = HomeMaticStatus.OFF;
-		} else if (this.payload[2] == 0x01) {
+		} else if (payload[2] == 0x01) {
 			//TODO What does 0x01 mean?
 			//status = HomeMaticStatus.ON;
-		} else if (this.payload[2] == 0xC8) {
+		} else if (payload[2] == 0xC8) {
 			status = HomeMaticStatus.ON;
 		}
 
-		lowBat = Util.isBitSet(this.payload[0], 7);
+		lowBat = Util.isBitSet(payload[0], 7);
 	}
 
 	@Override

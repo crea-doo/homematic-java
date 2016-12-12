@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.MessageCallback;
 import at.creadoo.homematic.packets.HomeMaticPacket;
+import at.creadoo.homematic.packets.HomeMaticPacketRemote;
 import at.creadoo.homematic.util.PacketUtil;
 
 import org.apache.log4j.Logger;
@@ -77,6 +78,10 @@ public class HidConnection implements MessageCallback  {
         }
         
         log.debug("Packet: " + homeMaticPacket);
+        if (homeMaticPacket instanceof HomeMaticPacketRemote) {
+        	final HomeMaticPacketRemote homeMaticPacketRemote = (HomeMaticPacketRemote) homeMaticPacket;
+        	log.debug("Packet: Channel = " + homeMaticPacketRemote.getChannel());
+        }
         
         for (ILinkListener listener : this.link.getLinkListeners()) {
             listener.received(homeMaticPacket);

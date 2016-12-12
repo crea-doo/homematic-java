@@ -101,8 +101,12 @@ public class Util {
 		final String temp = data.toLowerCase();
 		int len = temp.length();
 		byte[] result = new byte[len / 2];
-		for (int i = 0; i < len; i += 2) {
-			result[i / 2] = (byte) ((Character.digit(temp.charAt(i), 16) << 4) + Character.digit(temp.charAt(i + 1), 16));
+		try {
+			for (int i = 0; i < len; i += 2) {
+				result[i / 2] = (byte) ((Character.digit(temp.charAt(i), 16) << 4) + Character.digit(temp.charAt(i + 1), 16));
+			}
+		} catch (Throwable ex) {
+			//
 		}
 		return result;
 	}
