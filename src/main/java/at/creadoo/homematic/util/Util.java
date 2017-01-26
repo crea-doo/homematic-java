@@ -379,11 +379,30 @@ public class Util {
 	    return rightShifted & mask;
 	}
 	
+    public static String hardwareIdToString(final Integer hardwareId) {
+    	return hardwareIdToString(hardwareId.longValue(), null, null);
+	}
+	
+    public static String hardwareIdToString(final Integer hardwareId, final Integer hardwareId2, final Integer hardwareId3) {
+    	return hardwareIdToString(hardwareId.longValue(), hardwareId2.longValue(), hardwareId3.longValue());
+	}
+	
     public static String hardwareIdToString(final Long hardwareId) {
+    	return hardwareIdToString(hardwareId, null, null);
+    }
+    
+    public static String hardwareIdToString(final Long hardwareId, final Long hardwareId2, final Long hardwareId3) {
+    	final StringBuilder sb = new StringBuilder();
     	if (hardwareId != null) {
-    		return "HardwareId: " + hardwareId +" (" + toHex(hardwareId) + ")";
+    		sb.append("HardwareId: " + hardwareId +" (" + toHex(hardwareId) + ")");
     	}
-    	return "";
+    	if (hardwareId2 != null) {
+    		sb.append("HardwareId 2: " + hardwareId2 +" (" + toHex(hardwareId2) + ")");
+    	}
+    	if (hardwareId3 != null) {
+    		sb.append("HardwareId 3: " + hardwareId3 +" (" + toHex(hardwareId3) + ")");
+    	}
+    	return sb.toString();
 	}
     
     public static Map<String, String> dictionaryToMap(final Dictionary<String, ?> source) {
