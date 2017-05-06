@@ -41,12 +41,22 @@ public class TestUtil {
 	}
 	
 	@Test
-	public void testHex() {
+	public void testHex1() {
 		Assert.assertEquals(Util.isHex("3C1E0F07B8DC6EB70000000000000000"), true);
 	}
 	
 	@Test
-	public void testByteToHex() {
+	public void testHex2() {
+		Assert.assertEquals(Util.isHex("3C1E0F07B8DC6EB7000000000000000X"), false);
+	}
+	
+	@Test
+	public void testByteToHex1() {
 		Assert.assertEquals(Util.toByteFromHex("3C1E0F07B8DC6EB70000000000000000").length, 16);
+	}
+	
+	@Test
+	public void testByteToHex2() {
+		Assert.assertEquals(Util.toIntFromHex("3C1E0F0"), 63037680);
 	}
 }

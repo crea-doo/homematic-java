@@ -27,7 +27,7 @@ public abstract class LinkBaseImpl implements ILink {
     
     private boolean aesEnabled = false;
     
-    protected boolean aesInitialized = false;
+    protected AtomicBoolean aesInitialized = new AtomicBoolean(false);
     
     protected byte[] aesRFKey = null;
     protected int aesRFKeyIndex = 1;

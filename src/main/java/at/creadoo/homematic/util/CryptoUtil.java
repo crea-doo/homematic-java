@@ -42,7 +42,7 @@ public class CryptoUtil {
 	}
 
 	public static byte[] aesCrypt(final Cipher cipher, final byte[] plain) throws GeneralSecurityException, IOException {
-		return cipher.doFinal(plain);
+		return cipher.update(plain);
 	}
 
 }

@@ -6,7 +6,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Date;
-import java.util.List;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -35,6 +34,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	private static final Integer DEFAULT_KEEP_ALIVE_INTERVAL = 25 * 1000;
 	
 	private static final Integer RESET_GATEWAY_TIME_INTERVAL = 10 * 60 * 60 * 1000;
+	
+	/**
+	 * Time between checks if AES was initialized successfully
+	 */
+	private static final Integer DEFAULT_AES_INIT_WAIT_INTERVAL = 100;
+	
+	/**
+	 * Timeout in milliseconds, to abort waiting for successful AES initialization
+	 */
+	private static final Integer DEFAULT_AES_INIT_WAIT_TIMEOUT = DEFAULT_AES_INIT_WAIT_INTERVAL * 10 * 5;
 
 	/**
 	 * Line end marker
@@ -56,7 +65,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	 */
 	private final Integer connectionTimeout;
 	
-	private SocketListener listener;
+	private DecryptingSocketListener listener;
 
 	private int firmwareVersion;
 
@@ -85,7 +94,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	private final Timer timer = new Timer();
 
     /**
-     * Hexadecimal representation of the cenztral address to be used
+     * Hexadecimal representation of the central address to be used
      */
 	protected String centralAddress = null;
 
@@ -123,6 +132,10 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     
     protected Cipher aesCipherDecrypt = null;
     
+    protected SocketLink() {
+    	this(null, null);
+    }
+    
     public SocketLink(final InetSocketAddress remoteAddress) {
     	this(remoteAddress, null);
     }
@@ -152,17 +165,19 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 
 	@Override
 	protected boolean startLink(final Boolean reconnecting) {
-		log.info("*** Address *** set to " + remoteAddress.getHostName() + ":" + remoteAddress.getPort());
-		log.info("*** Timeout *** set to " + connectionTimeout);
-		
-		try {
-			this.prepareSocket(remoteAddress, connectionTimeout);
-		} catch (IOException ex) {
-			log.debug("Error connecting to socket", ex);
-			return false;
+		if (remoteAddress != null) {
+			log.info("*** Address *** set to " + remoteAddress.getHostName() + ":" + remoteAddress.getPort());
+			log.info("*** Timeout *** set to " + connectionTimeout);
+			
+			try {
+				this.prepareSocket(remoteAddress, connectionTimeout);
+			} catch (IOException ex) {
+				log.debug("Error connecting to socket", ex);
+				return false;
+			}
+			log.info("*** Connected *** to " + remoteAddress);
+			startReceiver();
 		}
-		log.info("*** Connected *** to " + remoteAddress);
-		startReceiver();
 		
 		startUpTime = 0L;
 		
@@ -189,7 +204,12 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		};
 		
 		// scheduling the task at interval
-		timer.schedule(keepAlive, keepAliveInterval, keepAliveInterval);
+		if (getAESEnabled()) {
+			// Set very short keepAlive interval as otherwise messages are not received or sent in time due to blocked en-/decryption...
+			timer.schedule(keepAlive, 1500, 500);
+		} else {
+			timer.schedule(keepAlive, keepAliveInterval, keepAliveInterval);
+		}
 		timer.schedule(gatewayTime, RESET_GATEWAY_TIME_INTERVAL, RESET_GATEWAY_TIME_INTERVAL);
 
 		if (!this.getAESEnabled()) {
@@ -202,8 +222,11 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		} else {
 			// Wait for AES initialized
 			try {
-				while (!this.aesInitialized) {
-					Thread.sleep(100);
+				int millisWaited = 0;
+				while (!this.aesInitialized.get() && (millisWaited < DEFAULT_AES_INIT_WAIT_TIMEOUT)) {
+					log.debug("Waiting for AES initialization...");
+					Thread.sleep(DEFAULT_AES_INIT_WAIT_INTERVAL);
+					millisWaited = millisWaited + DEFAULT_AES_INIT_WAIT_INTERVAL;
 				}
 			} catch (InterruptedException ex) {
 				log.error("Error while waiting AES to be initialized", ex);
@@ -247,9 +270,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	 * Starting the receiver thread
 	 */
 	private final void startReceiver() {
+		startReceiver(null);
+	}
+
+	/**
+	 * Starting the receiver thread
+	 */
+	private final void startReceiver(final Cipher cipher) {
 		if (listener == null) {
 			// start thread
-			(listener = new SocketListener(this, socket)).start();
+			(listener = new DecryptingSocketListener(this, socket, cipher)).start();
 		}
 	}
 
@@ -302,6 +332,9 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		
 		// Set current date/time
 		setupGatewayTime();
+		
+		// Request the current config
+		sendKeepAlive();
 	}
 
 	/**
@@ -311,60 +344,32 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	 * @throws IOException
 	 * @throws SocketException
 	 */
-	private final void setupGatewayTime() throws SocketException, IOException {
+	private final boolean setupGatewayTime() throws SocketException, IOException {
 		final TimeZone tz = TimeZone.getDefault();
 		final long now = new Date().getTime();
-		//final int gmtOffset = tz.getOffset(now) / 1000 / 60 / 60;
 		final int gmtOffset = tz.getOffset(now) / 1000 / 1800;
 		// Add one second for processing time
 		final long secondsSince2000 = (now / 1000) - 946684800 + 1;
 		
-		send("T" + Util.padLeft(Util.toHex(secondsSince2000), 8, "0") + "," + Util.padLeft(Util.toHex(gmtOffset), 2, "0") + ",00,00000000");
+		return send("T" + Util.padLeft(Util.toHex(secondsSince2000), 8, "0") + "," + Util.padLeft(Util.toHex(gmtOffset), 2, "0") + ",00,00000000");
 	}
 
     @Override
-    public void received(final byte[] data) {
-    	final List<byte[]> packets;
+    public void received(final byte[] packet) {
+    	/*
+    	log.debug("Packet >>");
+    	PacketUtil.logPacket(this, packet);
+    	log.debug("<<");
+    	*/
     	
-        if (getAESEnabled() && this.aesInitialized) {
-        	log.debug("Treating packet as encrypted");
-
-        	try {
-            	log.debug("Encrypted packet >>");
-                PacketUtil.logPacket(this, data);
-            	log.debug("<<");
-                if (this.aesCipherDecrypt == null) {
-                	log.error("Decryption not working due to missing cipher");
-                	return;
-                } else {
-                	// Decrypt data
-                	final byte[] decrypted = CryptoUtil.aesCrypt(this.aesCipherDecrypt, data);
-                	packets = Util.split(decrypted, EOL);
-                }
-			} catch (Throwable ex) {
-				log.error("Error while decrypting", ex);
-				return;
-			}
-        } else {
-        	// Add plain packet
-        	packets = Util.split(data, EOL);
-        }
-
-    	for (byte[] packet : packets) {
-        	log.debug("Packet >>");
-        	PacketUtil.logPacket(this, packet);
-        	log.debug("<<");
-        	
-        	try {
-        		processData(data);
-        	} catch (Throwable ex) {
-        		log.error("Error while processing packets", ex);
-        	}
+    	try {
+    		processData(packet);
+    	} catch (Throwable ex) {
+    		log.error("Error while processing packet", ex);
     	}
     }
 
-    public void processData(final byte[] data) {
-    	final byte[] packet = Util.strip(data, EOL);
+    public void processData(final byte[] packet) {
     	final String[] parts = new String(packet).split(",");
         
         char c = (char) packet[0];
@@ -389,7 +394,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
         		startUpTime = Long.parseLong(parts[5], 16);
         		lastKeepAliveResponse = System.currentTimeMillis();
         		
-        		log.debug("Received info from 'HM-CFG-LAN': [serial=" + serial + ", firmwareVersion=" + firmwareVersion + ", addressDefault=" + addressDefault + ", address=" + address + "]");
+        		log.debug("Received info from 'HM-CFG-LAN': [serial=" + serial + ", firmwareVersion=" + firmwareVersion + ", addressDefault=" + Util.toHex(addressDefault) + ", address=" + Util.toHex(address) + "]");
         		return;
         	}
 		} else if (c == 'V' && getAESEnabled()) {
@@ -416,14 +421,15 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     		try {
     			log.debug("Send LocalIV to 'HM-CFG-LAN': [" + this.aesLocalIV + "]");
     			final String response = "V" + this.aesLocalIV.toUpperCase();
-    			send(response.getBytes());
+    			send(response);
     		} catch(IOException ex) {
     			log.error("Error while setting up AES", ex);
     			close();
 				return;
     		}
-    		
-    		this.aesInitialized = true;
+
+    		listener.setCipher(this.aesCipherDecrypt);
+    		this.aesInitialized.getAndSet(true);
     		
     		try {
 				setupGateway();
@@ -463,6 +469,10 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	}
 	
 	protected boolean send(final String data) throws SocketException, IOException {
+		if (data == null) {
+			log.debug("Sending not possible. Data is null.");
+			return false;
+		}
 		return send(data.getBytes());
 	}
 
@@ -478,13 +488,13 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		
 		final byte[] packet;
         if (getAESEnabled()) {
-        	if (this.aesInitialized) {
+        	if (this.aesInitialized.get()) {
             	// Encryption enabled and ready
-	        	log.debug("Encrypt packet");
+	        	//log.debug("Encrypt packet");
 	        	try {
-	            	log.debug("Plain packet >>");
-	            	PacketUtil.logPacket(this, data);
-	            	log.debug("<<");
+	            	//log.debug("Plain packet >>");
+	            	//PacketUtil.logPacket(this, data);
+	            	//log.debug("<<");
 	                if (this.aesCipherEncrypt == null) {
 	                	log.error("Encryption not working due to missing cipher");
 	                	packet = Util.appendItem(data, EOL);
@@ -492,9 +502,9 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	                	packet = CryptoUtil.aesCrypt(this.aesCipherEncrypt, Util.appendItem(data, EOL));
 	                }
 	
-	            	log.debug("Encrypted packet >>");
-	            	PacketUtil.logPacket(this, packet);
-	            	log.debug("<<");
+	            	//log.debug("Encrypted packet >>");
+	            	//PacketUtil.logPacket(this, packet);
+	            	//log.debug("<<");
 				} catch (Throwable ex) {
 					log.error("Error while encrypting", ex);
 					return false;
@@ -509,11 +519,16 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
         	packet = Util.appendItem(data, EOL);
         }
 		
+        if (packet == null) {
+        	//log.debug("Packet is null");
+        	return false;
+        }
+        
 		try {
 			final OutputStream out = socket.getOutputStream();
 			out.write(packet);
 			out.flush();
-			log.debug("Sending packet: '" + Util.toString(data) + "'");
+			//log.debug("Sending packet: '" + Util.toString(data) + "'");
 		} catch (IOException ex) {
 			log.error("Sending: IO exception", ex);
 			return false;
@@ -568,7 +583,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	
 	@Override
     protected void cleanUpAES() {
-    	this.aesInitialized = false;
+    	this.aesInitialized.getAndSet(false);
     	this.aesRemoteIV = null;
     	this.aesRemoteIVByte = null;
     	this.aesLocalIV = null;
@@ -593,6 +608,20 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		
 		this.aesLanKey = aesLanKey;
 		this.aesLanKeyByte = Util.toByteFromHex(aesLanKey);
+		return true;
+	}
+	
+	protected boolean setAESLocalIV(final String aesLocalIV) {
+		if (aesLocalIV == null || aesLocalIV.length() != 32 || !Util.isHex(aesLocalIV)) {
+			return false;
+		}
+		
+		// Only reset everything if key has changed
+		if (this.aesLocalIV == null || !this.aesLocalIV.equals(aesLocalIV)) {
+			this.aesLocalIV = aesLocalIV;
+			this.aesLocalIVByte = Util.toByteFromHex(aesLocalIV);
+			setupAES();
+		}
 		return true;
 	}
 
@@ -620,14 +649,6 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 		if (keepAliveInterval > 0 && keepAliveInterval < 30) {
 			this.keepAliveInterval = keepAliveInterval;
 		}
-	}
-
-	public void testAES(final String data) {
-		log.debug("testAES: Input = '" + data + "'");
-		
-		setupAES();
-		
-		received(data.getBytes());
 	}
 
 }

@@ -151,6 +151,37 @@ public class Util {
 		return result;
 	}
 
+	public static boolean startsWith(final byte[] data, final byte marker) {
+		if (data == null || data.length == 0) {
+			return false;
+		}
+		
+		return (data[0] == marker);
+	}
+
+	public static boolean startsWith(final byte[] data, final byte[] marker) {
+		if (data == null || marker == null || data.length < marker.length) {
+			return false;
+		}
+		
+		boolean result = true;
+		for (int i = 0; i < marker.length; i++) {
+			if (data[i] != marker[i]) {
+				result = false;
+				break;
+			}
+		}
+		return result;
+	}
+
+	public static boolean endsWith(final byte[] data, final byte marker) {
+		if (data == null || data.length == 0) {
+			return false;
+		}
+		
+		return (data[data.length - 1] == marker);
+	}
+
 	public static boolean endsWith(final byte[] data, final byte[] marker) {
 		if (data == null || marker == null || data.length < marker.length) {
 			return false;
@@ -231,16 +262,47 @@ public class Util {
 		return result;
 	}
 
+	public static byte[] strip(final byte[] data, final byte marker) {
+		if (data == null) {
+			return null;
+		}
+		
+		if (startsWith(data, marker) && endsWith(data, marker)) {
+			final byte[] stripped = new byte[data.length - 2];
+			System.arraycopy(data, 1, stripped, 0, data.length - 2);
+			return stripped;
+		} else if(startsWith(data, marker)) {
+			final byte[] stripped = new byte[data.length - 1];
+			System.arraycopy(data, 1, stripped, 0, data.length - 1);
+			return stripped;
+		} else if (endsWith(data, marker)) {
+			final byte[] stripped = new byte[data.length - 1];
+			System.arraycopy(data, 0, stripped, 0, data.length - 1);
+			return stripped;
+		}
+		
+		return data;
+	}
+
 	public static byte[] strip(final byte[] data, final byte[] marker) {
 		if (data == null || marker == null) {
 			return null;
 		}
 		
-		if (endsWith(data, marker)) {
-			final byte[] result = new byte[data.length - marker.length];
-			System.arraycopy(data, 0, result, 0, data.length - marker.length);
-			return result;
+		if (startsWith(data, marker) && endsWith(data, marker)) {
+			final byte[] stripped = new byte[data.length - (2 * marker.length)];
+			System.arraycopy(data, marker.length, stripped, 0, data.length - (2 * marker.length));
+			return stripped;
+		} else if(startsWith(data, marker)) {
+			final byte[] stripped = new byte[data.length - marker.length];
+			System.arraycopy(data, marker.length, stripped, 0, data.length - marker.length);
+			return stripped;
+		} else if (endsWith(data, marker)) {
+			final byte[] stripped = new byte[data.length - marker.length];
+			System.arraycopy(data, 0, stripped, 0, data.length - marker.length);
+			return stripped;
 		}
+		
 		return data;
 	}
 

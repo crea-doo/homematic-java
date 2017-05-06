@@ -27,6 +27,8 @@ public interface ILink {
 
 	/**
 	 * Start the link
+	 * 
+	 * @return true, if the link is connected
 	 */
 	boolean start();
 

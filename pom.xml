@@ -30,14 +30,14 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<log4j.version>1.2.17</log4j.version>
-		<commons.io.version>2.4</commons.io.version>
+		<commons.io.version>2.5</commons.io.version>
 		<commons.codec.version>1.10</commons.codec.version>
-		<bouncycastle.version>1.54</bouncycastle.version>
+		<bouncycastle.version>1.56</bouncycastle.version>
 		<jna.version>4.2.2</jna.version>
 		<hid4java.version>0.4.0</hid4java.version>
 
-		<testng.version>6.8.21</testng.version>
-		<surefire.version>2.19.1</surefire.version>
+		<testng.version>6.11</testng.version>
+		<surefire.version>2.20</surefire.version>
 	</properties>
 
 	<scm>
