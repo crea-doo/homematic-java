@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * HidLink manages the connection to the homematic usb
+ * {@link HidLink} manages the connection to the HomeMatic USB
  * gateway HM-CFG-USB-(2). It is responsible to start the real hardware (USB
  * gateway).
  */

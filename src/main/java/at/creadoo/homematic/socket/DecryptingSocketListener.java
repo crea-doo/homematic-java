@@ -13,11 +13,6 @@ import javax.crypto.Cipher;
 class DecryptingSocketListener implements Runnable {
 	
 	private static final Logger log = Logger.getLogger(DecryptingSocketListener.class);
-
-	/**
-	 * Line end marker
-	 */
-	private static final byte[] EOL = new byte[] {0x0D , 0x0A};
 	
 	private Thread runningThread = null;
 
@@ -25,18 +20,25 @@ class DecryptingSocketListener implements Runnable {
 
 	private final Socket socket;
 
+	/**
+	 * Line end marker
+	 */
+	private final byte[] endOfLineMarker;
+
 	private Object cipherLock = new Object();
 	private Cipher cipher = null;
 
-	public DecryptingSocketListener(final MessageCallback callback, final Socket socket) {
+	public DecryptingSocketListener(final MessageCallback callback, final Socket socket, final byte[] endOfLineMarker) {
 		this.callback = callback;
 		this.socket = socket;
+		this.endOfLineMarker = endOfLineMarker;
 		this.cipher = null;
 	}
 
-	public DecryptingSocketListener(final MessageCallback callback, final Socket socket, final Cipher cipher) {
+	public DecryptingSocketListener(final MessageCallback callback, final Socket socket, final byte[] endOfLineMarker, final Cipher cipher) {
 		this.callback = callback;
 		this.socket = socket;
+		this.endOfLineMarker = endOfLineMarker;
 		this.cipher = cipher;
 	}
 	
@@ -88,16 +90,16 @@ class DecryptingSocketListener implements Runnable {
 				}
 	            
 	            // Check for line end and send packet
-	            int lineEndMarker = Util.indexOf(buffer, EOL);
+	            int lineEndMarker = Util.indexOf(buffer, endOfLineMarker);
 	            if (lineEndMarker > -1) {
 	            	do {
 		            	final byte[] packet = new byte[lineEndMarker];
 						System.arraycopy(buffer, 0, packet, 0, lineEndMarker);
 						
-						final int restLength = offset - lineEndMarker - EOL.length;
+						final int restLength = offset - lineEndMarker - endOfLineMarker.length;
 						if (restLength > 0) {
 							final byte[] rest = new byte[restLength];
-							System.arraycopy(buffer, lineEndMarker + EOL.length, rest, 0, restLength);
+							System.arraycopy(buffer, lineEndMarker + endOfLineMarker.length, rest, 0, restLength);
 	
 							buffer = new byte[bufferMax];
 							System.arraycopy(rest, 0, buffer, 0, restLength);
@@ -109,7 +111,7 @@ class DecryptingSocketListener implements Runnable {
 						
 			            callback.received(packet);
 			            
-			            lineEndMarker = Util.indexOf(buffer, EOL);
+			            lineEndMarker = Util.indexOf(buffer, endOfLineMarker);
 	            	} while (lineEndMarker > -1);
 	            }
 			}

@@ -22,6 +22,10 @@ import at.creadoo.homematic.util.CryptoUtil;
 import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
 
+/**
+ * {@link SocketLink} manages the connection to the HomeMatic LAN
+ * gateway HM-CFG-LAN.
+ */
 public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	
 	private static final Logger log = Logger.getLogger(SocketLink.class);
@@ -279,7 +283,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	private final void startReceiver(final Cipher cipher) {
 		if (listener == null) {
 			// start thread
-			(listener = new DecryptingSocketListener(this, socket, cipher)).start();
+			(listener = new DecryptingSocketListener(this, socket, EOL, cipher)).start();
 		}
 	}
 

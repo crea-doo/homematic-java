@@ -5,12 +5,8 @@ import java.net.SocketException;
 
 import org.apache.log4j.Logger;
 
-import at.creadoo.homematic.HomeMaticMessageType;
 import at.creadoo.homematic.HomeMaticStatus;
-import at.creadoo.homematic.packets.HomeMaticPacket;
-import at.creadoo.homematic.packets.HomeMaticPacketEvent;
 import at.creadoo.homematic.packets.HomeMaticPacketSet;
-import at.creadoo.homematic.util.PacketUtil;
 
 public class Test {
 
@@ -26,6 +22,7 @@ public class Test {
 		final HidLink hardware = new HidLink();
 		hardware.setUsbProductId("0xC00F");
 		hardware.setUsbVendorId("0x1B1F");
+		
 		try {
 			hardware.start();
 		} catch (Exception ex) {
