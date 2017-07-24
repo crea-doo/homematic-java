@@ -6,7 +6,7 @@ SET PARAMS=%*
 
 cd "%SD%"
 
-call mvn release:rollback %PARAMS%
+call mvnw release:rollback %PARAMS%
 
 cd "%WD%"
 

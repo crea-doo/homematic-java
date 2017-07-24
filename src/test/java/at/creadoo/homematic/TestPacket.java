@@ -8,10 +8,10 @@ import org.testng.annotations.Test;
 
 import at.creadoo.homematic.HomeMaticError;
 import at.creadoo.homematic.HomeMaticStatus;
-import at.creadoo.homematic.packets.HomeMaticPacket;
-import at.creadoo.homematic.packets.HomeMaticPacketEvent;
-import at.creadoo.homematic.packets.HomeMaticPacketInformation;
-import at.creadoo.homematic.packets.HomeMaticPacketRemote;
+import at.creadoo.homematic.packet.HomeMaticPacket;
+import at.creadoo.homematic.packet.HomeMaticPacketEvent;
+import at.creadoo.homematic.packet.HomeMaticPacketInformation;
+import at.creadoo.homematic.packet.HomeMaticPacketRemote;
 import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
 

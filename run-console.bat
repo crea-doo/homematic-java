@@ -6,7 +6,7 @@ SET PARAMS=%*
 
 cd "%SD%"
 
-call mvn clean install -P run-console %PARAMS%
+call mvnw clean install -P run-console %PARAMS%
 
 cd "%WD%"
 

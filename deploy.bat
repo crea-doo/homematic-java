@@ -6,6 +6,6 @@ SET PARAMS=%*
 
 cd "%SD%"
 
-call mvn clean deploy -Prelease %PARAMS%
+call mvnw clean deploy -Prelease %PARAMS%
 
 cd "%WD%"

@@ -1,4 +1,19 @@
-package at.creadoo.homematic.socket;
+/*
+ * Copyright 2017 crea-doo.at
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. 
+ */
+package at.creadoo.homematic.link;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -17,37 +32,37 @@ import org.apache.log4j.Logger;
 import at.creadoo.homematic.ILinkListener;
 import at.creadoo.homematic.MessageCallback;
 import at.creadoo.homematic.impl.LinkBaseImpl;
-import at.creadoo.homematic.packets.HomeMaticPacket;
+import at.creadoo.homematic.packet.HomeMaticPacket;
 import at.creadoo.homematic.util.CryptoUtil;
 import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
 
 /**
- * {@link SocketLink} manages the connection to the HomeMatic LAN
+ * {@link HMCFGLANLink} manages the connection to the HomeMatic LAN
  * gateway HM-CFG-LAN.
  */
-public class SocketLink extends LinkBaseImpl implements MessageCallback {
+public class HMCFGLANLink extends LinkBaseImpl implements MessageCallback {
 	
-	private static final Logger log = Logger.getLogger(SocketLink.class);
+	private static final Logger log = Logger.getLogger(HMCFGLANLink.class);
 
 	/**
 	 * Default timeout in milliseconds
 	 */
-	private static final Integer DEFAULT_TIMEOUT = 5000;
+	private static final int DEFAULT_TIMEOUT = 5000;
 
-	private static final Integer DEFAULT_KEEP_ALIVE_INTERVAL = 25 * 1000;
+	private static final int DEFAULT_KEEP_ALIVE_INTERVAL = 25 * 1000;
 	
-	private static final Integer RESET_GATEWAY_TIME_INTERVAL = 10 * 60 * 60 * 1000;
+	private static final int RESET_GATEWAY_TIME_INTERVAL = 10 * 60 * 60 * 1000;
 	
 	/**
 	 * Time between checks if AES was initialized successfully
 	 */
-	private static final Integer DEFAULT_AES_INIT_WAIT_INTERVAL = 100;
+	private static final int DEFAULT_AES_INIT_WAIT_INTERVAL = 100;
 	
 	/**
 	 * Timeout in milliseconds, to abort waiting for successful AES initialization
 	 */
-	private static final Integer DEFAULT_AES_INIT_WAIT_TIMEOUT = DEFAULT_AES_INIT_WAIT_INTERVAL * 10 * 5;
+	private static final int DEFAULT_AES_INIT_WAIT_TIMEOUT = DEFAULT_AES_INIT_WAIT_INTERVAL * 10 * 5;
 
 	/**
 	 * Line end marker
@@ -136,15 +151,15 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
     
     protected Cipher aesCipherDecrypt = null;
     
-    protected SocketLink() {
+    protected HMCFGLANLink() {
     	this(null, null);
     }
     
-    public SocketLink(final InetSocketAddress remoteAddress) {
+    public HMCFGLANLink(final InetSocketAddress remoteAddress) {
     	this(remoteAddress, null);
     }
     
-    public SocketLink(final InetSocketAddress remoteAddress, final ILinkListener listener) {
+    public HMCFGLANLink(final InetSocketAddress remoteAddress, final ILinkListener listener) {
     	super(listener);
     	
     	this.remoteAddress = remoteAddress;
@@ -168,7 +183,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	}
 
 	@Override
-	protected boolean startLink(final Boolean reconnecting) {
+	protected boolean startLink(final boolean reconnecting) {
 		if (remoteAddress != null) {
 			log.info("*** Address *** set to " + remoteAddress.getHostName() + ":" + remoteAddress.getPort());
 			log.info("*** Timeout *** set to " + connectionTimeout);
@@ -359,7 +374,7 @@ public class SocketLink extends LinkBaseImpl implements MessageCallback {
 	}
 
     @Override
-    public void received(final byte[] packet) {
+    public void received(final Object source, final byte[] packet) {
     	/*
     	log.debug("Packet >>");
     	PacketUtil.logPacket(this, packet);

@@ -9,6 +9,6 @@ SELF=$SD/$SCRIPT
 
 cd $SD/
 
-mvn clean install
+mvnw clean install
 
 cd $WD/

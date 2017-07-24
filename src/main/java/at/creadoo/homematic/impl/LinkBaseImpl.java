@@ -1,10 +1,25 @@
+/*
+ * Copyright 2017 crea-doo.at
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. 
+ */
 package at.creadoo.homematic.impl;
 
 import org.apache.log4j.Logger;
 
 import at.creadoo.homematic.ILink;
 import at.creadoo.homematic.ILinkListener;
-import at.creadoo.homematic.packets.HomeMaticPacket;
+import at.creadoo.homematic.packet.HomeMaticPacket;
 import at.creadoo.homematic.util.Util;
 
 import java.io.IOException;
@@ -60,7 +75,7 @@ public abstract class LinkBaseImpl implements ILink {
     	return start(false);
     }
     
-    public Boolean start(final Boolean reconnecting) {
+    public boolean start(final boolean reconnecting) {
         log.debug("Starting link " + getName());
 
         if (!listen.getAndSet(true)) {
@@ -79,7 +94,7 @@ public abstract class LinkBaseImpl implements ILink {
         return true;
     }
 	
-	protected abstract boolean startLink(final Boolean reconnecting);
+	protected abstract boolean startLink(final boolean reconnecting);
 	
 	public void reconnect() {
 		start(true);

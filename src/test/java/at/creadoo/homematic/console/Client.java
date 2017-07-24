@@ -10,10 +10,10 @@ import java.util.List;
 import at.creadoo.homematic.HomeMaticStatus;
 import at.creadoo.homematic.ILink;
 import at.creadoo.homematic.ILinkListener;
-import at.creadoo.homematic.jhid.HidLink;
-import at.creadoo.homematic.packets.HomeMaticPacket;
-import at.creadoo.homematic.packets.HomeMaticPacketSet;
-import at.creadoo.homematic.socket.SocketLink;
+import at.creadoo.homematic.link.HMCFGLANLink;
+import at.creadoo.homematic.link.HMCFGUSBLink;
+import at.creadoo.homematic.packet.HomeMaticPacket;
+import at.creadoo.homematic.packet.HomeMaticPacketSet;
 
 public class Client {
 
@@ -108,7 +108,7 @@ public class Client {
 
     private static ILink setupHIDLink() {
 		try {
-			return new HidLink(linkListener);
+			return new HMCFGUSBLink(linkListener);
 		} catch (Throwable ex) {
 			System.out.println("[ERROR] " + ex.getMessage());
 			ex.printStackTrace(System.out);
@@ -119,7 +119,7 @@ public class Client {
     private static ILink setupSocketLink() {
 		try {
 			final InetSocketAddress socketRemoteIp = new InetSocketAddress("10.0.1.111", 1000);
-			return new SocketLink(socketRemoteIp, linkListener);
+			return new HMCFGLANLink(socketRemoteIp, linkListener);
 		} catch (Throwable ex) {
 			System.out.println("[ERROR] " + ex.getMessage());
 			ex.printStackTrace(System.out);
