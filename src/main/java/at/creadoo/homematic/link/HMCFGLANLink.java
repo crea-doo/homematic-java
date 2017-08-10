@@ -29,7 +29,7 @@ import javax.crypto.Cipher;
 
 import org.apache.log4j.Logger;
 
-import at.creadoo.homematic.ILinkListener;
+import at.creadoo.homematic.IHomeMaticLinkListener;
 import at.creadoo.homematic.MessageCallback;
 import at.creadoo.homematic.impl.LinkBaseImpl;
 import at.creadoo.homematic.packet.HomeMaticPacket;
@@ -159,7 +159,7 @@ public class HMCFGLANLink extends LinkBaseImpl implements MessageCallback {
     	this(remoteAddress, null);
     }
     
-    public HMCFGLANLink(final InetSocketAddress remoteAddress, final ILinkListener listener) {
+    public HMCFGLANLink(final InetSocketAddress remoteAddress, final IHomeMaticLinkListener listener) {
     	super(listener);
     	
     	this.remoteAddress = remoteAddress;
@@ -467,8 +467,8 @@ public class HMCFGLANLink extends LinkBaseImpl implements MessageCallback {
 	        
 	        log.debug("Packet: " + homeMaticPacket);
 	        
-	        for (ILinkListener listener : getLinkListeners()) {
-	            listener.received(homeMaticPacket);
+	        for (IHomeMaticLinkListener listener : getLinkListeners()) {
+	            listener.received(this, homeMaticPacket);
 	        }
 		}
     }

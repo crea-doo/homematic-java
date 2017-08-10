@@ -31,7 +31,7 @@ import javax.crypto.Cipher;
 
 import org.apache.log4j.Logger;
 
-import at.creadoo.homematic.ILinkListener;
+import at.creadoo.homematic.IHomeMaticLinkListener;
 import at.creadoo.homematic.MessageCallback;
 import at.creadoo.homematic.impl.LinkBaseImpl;
 import at.creadoo.homematic.packet.HomeMaticPacket;
@@ -202,7 +202,7 @@ public class HMLGWLink extends LinkBaseImpl implements MessageCallback {
     	this(remoteAddress.getAddress(), remoteAddress.getPort(), remoteAddressKeepAlive.getPort(), null);
     }
     
-    public HMLGWLink(final InetSocketAddress remoteAddress, final InetSocketAddress remoteAddressKeepAlive, final ILinkListener listener) {
+    public HMLGWLink(final InetSocketAddress remoteAddress, final InetSocketAddress remoteAddressKeepAlive, final IHomeMaticLinkListener listener) {
     	this(remoteAddress.getAddress(), remoteAddress.getPort(), remoteAddressKeepAlive.getPort(), listener);
     }
     
@@ -210,7 +210,7 @@ public class HMLGWLink extends LinkBaseImpl implements MessageCallback {
     	this(remoteAddress.getAddress(), remoteAddress.getPort(), keepAlivePort, null);
     }
     
-    public HMLGWLink(final InetSocketAddress remoteAddress, final int keepAlivePort, final ILinkListener listener) {
+    public HMLGWLink(final InetSocketAddress remoteAddress, final int keepAlivePort, final IHomeMaticLinkListener listener) {
     	this(remoteAddress.getAddress(), remoteAddress.getPort(), keepAlivePort, listener);
     }
     
@@ -218,7 +218,7 @@ public class HMLGWLink extends LinkBaseImpl implements MessageCallback {
     	this(remoteAddress, defaultPort, keepAlivePort, null);
     }
     
-    public HMLGWLink(final InetAddress remoteAddress, final int defaultPort, final int keepAlivePort, final ILinkListener listener) {
+    public HMLGWLink(final InetAddress remoteAddress, final int defaultPort, final int keepAlivePort, final IHomeMaticLinkListener listener) {
     	super(listener);
     	
     	this.remoteAddressDefault = new InetSocketAddress(remoteAddress, defaultPort);
@@ -678,8 +678,8 @@ public class HMLGWLink extends LinkBaseImpl implements MessageCallback {
 	        
 	        //log.debug("Packet: " + homeMaticPacket);
 	        
-	        for (ILinkListener listener : getLinkListeners()) {
-	            listener.received(homeMaticPacket);
+	        for (IHomeMaticLinkListener listener : getLinkListeners()) {
+	            listener.received(this, homeMaticPacket);
 	        }
 		}
     }

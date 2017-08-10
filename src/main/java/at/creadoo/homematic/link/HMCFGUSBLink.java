@@ -15,7 +15,7 @@
  */
 package at.creadoo.homematic.link;
 
-import at.creadoo.homematic.ILinkListener;
+import at.creadoo.homematic.IHomeMaticLinkListener;
 import at.creadoo.homematic.impl.LinkBaseImpl;
 import at.creadoo.homematic.packet.HomeMaticPacket;
 
@@ -40,6 +40,10 @@ public class HMCFGUSBLink extends LinkBaseImpl implements HidServicesListener {
 
 	private static final Logger log = Logger.getLogger(HMCFGUSBLink.class);
 
+	public static final int DEFAULT_PRODUCT_ID = 0xc00f;
+
+	public static final int DEFAULT_VENDOR_ID = 0x1b1f;
+	
 	private String usbVendorId;
 
 	private String usbProductId;
@@ -50,7 +54,7 @@ public class HMCFGUSBLink extends LinkBaseImpl implements HidServicesListener {
     	super();
 	}
     
-    public HMCFGUSBLink(final ILinkListener listener) {
+    public HMCFGUSBLink(final IHomeMaticLinkListener listener) {
     	super(listener);
 	}
     
@@ -76,7 +80,7 @@ public class HMCFGUSBLink extends LinkBaseImpl implements HidServicesListener {
 		HidServices hidServices = HidManager.getHidServices();
 		hidServices.addHidServicesListener(this);
 
-		if (hidServices.getAttachedHidDevices() == null) {
+		if (hidServices.getAttachedHidDevices() == null || hidServices.getAttachedHidDevices().size() == 0) {
 			log.error("No devices found!");
 			return false;
 		}
@@ -172,7 +176,7 @@ public class HMCFGUSBLink extends LinkBaseImpl implements HidServicesListener {
 
 	private int getUsbVendorId() {
 		// Read configuration
-		int vid = 0x1b1f;
+		int vid = DEFAULT_VENDOR_ID;
 		try {
 			// vids in the config file can start with '0x' -> interpret those as
 			// hexadecimal numbers
@@ -188,12 +192,12 @@ public class HMCFGUSBLink extends LinkBaseImpl implements HidServicesListener {
 	 * 
 	 * @param usbVendorId
 	 */
-	public void setUsbVendorId(String usbVendorId) {
+	public void setUsbVendorId(final String usbVendorId) {
 		this.usbVendorId = usbVendorId;
 	}
 
 	private int getUsbProductId() {
-		int pid = 0xc00f;
+		int pid = DEFAULT_PRODUCT_ID;
 		try {
 			// pids in the config file can start with '0x' -> interpret those as
 			// hexadecimal numbers

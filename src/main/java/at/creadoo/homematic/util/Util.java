@@ -24,10 +24,6 @@ import java.util.Map;
 import java.util.Random;
 
 public class Util {
-
-	public static final String CONFIG_PREFIX = "homematic.";
-	public static final String MODE_HID = "hid";
-	public static final String MODE_IP = "ip";
 	
 	public static int toInt(final byte data) {
 		return ((int) data) & 0xFF;

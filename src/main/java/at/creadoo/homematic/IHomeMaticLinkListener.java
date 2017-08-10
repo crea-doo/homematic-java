@@ -17,10 +17,29 @@ package at.creadoo.homematic;
 
 import at.creadoo.homematic.packet.HomeMaticPacket;
 
-public interface ILinkListener {
+public interface IHomeMaticLinkListener {
 
-    void received(HomeMaticPacket packet);
+    void received(IHomeMaticLink link, HomeMaticPacket packet);
 
-    void close();
+	/**
+	 * Callback to get to know when a related link was started.
+	 * 
+	 * @param link
+	 */
+	void linkStarted(IHomeMaticLink link);
+
+	/**
+	 * Callback to get to know when a related link was closed.
+	 * 
+	 * @param link
+	 */
+	void linkClosed(IHomeMaticLink link);
+
+	/**
+	 * Callback to get to know when a related link was unexpectedly terminated.
+	 * 
+	 * @param link
+	 */
+	void linkTerminated(IHomeMaticLink link);
 
 }

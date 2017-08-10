@@ -24,7 +24,7 @@ import at.creadoo.homematic.packet.HomeMaticPacket;
 /**
  * Interface for the different adapters (USB or LAN)
  */
-public interface ILink {
+public interface IHomeMaticLink {
 
 	/**
 	 * Return the name of the link
@@ -55,21 +55,21 @@ public interface ILink {
 	/**
 	 * Returns all the listener from the list
 	 */
-	List<ILinkListener> getLinkListeners();
+	List<IHomeMaticLinkListener> getLinkListeners();
 	
 	/**
 	 * Add a new event listener to the list
 	 * 
 	 * @param linkListener LinkListener instance
 	 */
-	void addLinkListener(ILinkListener linkListener);
+	void addLinkListener(IHomeMaticLinkListener linkListener);
 	
 	/**
 	 * Remove an event listener from the list
 	 * 
 	 * @param linkListener LinkListener instance
 	 */
-	void removeLinkListener(ILinkListener linkListener);
+	void removeLinkListener(IHomeMaticLinkListener linkListener);
 
 	/**
 	 * Send a packet only with the telegram instance

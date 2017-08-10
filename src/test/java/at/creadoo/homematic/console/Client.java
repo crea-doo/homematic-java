@@ -8,8 +8,8 @@ import java.util.Collections;
 import java.util.List;
 
 import at.creadoo.homematic.HomeMaticStatus;
-import at.creadoo.homematic.ILink;
-import at.creadoo.homematic.ILinkListener;
+import at.creadoo.homematic.IHomeMaticLink;
+import at.creadoo.homematic.IHomeMaticLinkListener;
 import at.creadoo.homematic.link.HMCFGLANLink;
 import at.creadoo.homematic.link.HMCFGUSBLink;
 import at.creadoo.homematic.packet.HomeMaticPacket;
@@ -17,8 +17,8 @@ import at.creadoo.homematic.packet.HomeMaticPacketSet;
 
 public class Client {
 
-    private static ILinkListener linkListener;
-    private static ILink currentLink;
+    private static IHomeMaticLinkListener linkListener;
+    private static IHomeMaticLink currentLink;
 	
 	/**
 	 * @param args
@@ -92,21 +92,31 @@ public class Client {
      * Prepare everything
      */
     private static void setup() {
-		linkListener = new ILinkListener() {
-			
+		linkListener = new IHomeMaticLinkListener() {
+
 			@Override
-			public void received(final HomeMaticPacket packet) {
+			public void received(final IHomeMaticLink link, final HomeMaticPacket packet) {
 				System.out.println("Paket received: " + packet.toString());
 			}
-			
+
 			@Override
-			public void close() {
-				System.out.println("Link closed");
+			public void linkStarted(final IHomeMaticLink link) {
+				System.out.println("Link '" + link.getName() + "' started");
+			}
+
+			@Override
+			public void linkClosed(final IHomeMaticLink link) {
+				System.out.println("Link '" + link.getName() + "' closed");
+			}
+
+			@Override
+			public void linkTerminated(final IHomeMaticLink link) {
+				System.out.println("Link '" + link.getName() + "' terminated");
 			}
 		};
     }
 
-    private static ILink setupHIDLink() {
+    private static IHomeMaticLink setupHIDLink() {
 		try {
 			return new HMCFGUSBLink(linkListener);
 		} catch (Throwable ex) {
@@ -116,7 +126,7 @@ public class Client {
 		return null;
     }
 
-    private static ILink setupSocketLink() {
+    private static IHomeMaticLink setupSocketLink() {
 		try {
 			final InetSocketAddress socketRemoteIp = new InetSocketAddress("10.0.1.111", 1000);
 			return new HMCFGLANLink(socketRemoteIp, linkListener);

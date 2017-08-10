@@ -20,7 +20,7 @@ import java.util.Arrays;
 import org.apache.log4j.Logger;
 
 import at.creadoo.homematic.HomeMaticMessageType;
-import at.creadoo.homematic.ILink;
+import at.creadoo.homematic.IHomeMaticLink;
 import at.creadoo.homematic.packet.HomeMaticPacket;
 import at.creadoo.homematic.packet.HomeMaticPacketEvent;
 import at.creadoo.homematic.packet.HomeMaticPacketInformation;
@@ -45,7 +45,7 @@ public final class PacketUtil {
         }
     }
 
-	public static void logPacket(final ILink link, final byte[] data) {
+	public static void logPacket(final IHomeMaticLink link, final byte[] data) {
         if (log.isDebugEnabled() && data != null) {
             log.debug("Packet for/from link '" + link.getName() + "': ");
             logPacket(data);

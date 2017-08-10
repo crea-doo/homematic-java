@@ -17,8 +17,8 @@ package at.creadoo.homematic.impl;
 
 import org.apache.log4j.Logger;
 
-import at.creadoo.homematic.ILink;
-import at.creadoo.homematic.ILinkListener;
+import at.creadoo.homematic.IHomeMaticLink;
+import at.creadoo.homematic.IHomeMaticLinkListener;
 import at.creadoo.homematic.packet.HomeMaticPacket;
 import at.creadoo.homematic.util.Util;
 
@@ -32,11 +32,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Socket connector base implementation class for connecting to gateway
  */
-public abstract class LinkBaseImpl implements ILink {
+public abstract class LinkBaseImpl implements IHomeMaticLink {
 	
 	private static final Logger log = Logger.getLogger(LinkBaseImpl.class);
 	
-    private final List<ILinkListener> listeners = new ArrayList<ILinkListener>();
+    private final List<IHomeMaticLinkListener> listeners = new ArrayList<IHomeMaticLinkListener>();
     
     protected final AtomicBoolean listen = new AtomicBoolean(false);
     
@@ -58,13 +58,13 @@ public abstract class LinkBaseImpl implements ILink {
 		this(null);
 	}
 	
-	public LinkBaseImpl(final ILinkListener listener) {
+	public LinkBaseImpl(final IHomeMaticLinkListener listener) {
 		if (listener != null) {
 			addLinkListener(listener);
 		}
 	}
 	
-	protected List<ILinkListener> getListeners() {
+	protected List<IHomeMaticLinkListener> getListeners() {
 		synchronized (listeners) {
 			return listeners;
 		}
@@ -101,9 +101,9 @@ public abstract class LinkBaseImpl implements ILink {
 	}
 
 	protected void receivedPacket(final HomeMaticPacket packet) {
-		for (ILinkListener listener : getListeners()) {
+		for (IHomeMaticLinkListener listener : getListeners()) {
 			try {
-				listener.received(packet);
+				listener.received(this, packet);
 			} catch (Throwable ex) {
 				//
 			}
@@ -131,14 +131,14 @@ public abstract class LinkBaseImpl implements ILink {
 	protected abstract boolean closeLink();
 
 	@Override
-	public List<ILinkListener> getLinkListeners() {
+	public List<IHomeMaticLinkListener> getLinkListeners() {
 		synchronized (listeners) {
 			return listeners;
 		}
 	}
 
 	@Override
-	public void addLinkListener(final ILinkListener linkListener) {
+	public void addLinkListener(final IHomeMaticLinkListener linkListener) {
 		synchronized (listeners) {
 			if (!listeners.contains(linkListener)) {
 				listeners.add(linkListener);
@@ -147,7 +147,7 @@ public abstract class LinkBaseImpl implements ILink {
 	}
 
 	@Override
-	public void removeLinkListener(final ILinkListener linkListener) {
+	public void removeLinkListener(final IHomeMaticLinkListener linkListener) {
 		synchronized (listeners) {
 			if (listeners.contains(linkListener)) {
 				listeners.remove(linkListener);
