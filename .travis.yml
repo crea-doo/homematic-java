@@ -1,9 +1,10 @@
 sudo: required
+
+os: linux
 dist: trusty
-group: edge
+
 language: java
 jdk:
   - oraclejdk7
   - oraclejdk8
-  - oraclejdk9
   - openjdk7
