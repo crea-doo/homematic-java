@@ -15,6 +15,9 @@
  */
 package at.creadoo.homematic.packet;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import at.creadoo.homematic.HomeMaticMessageType;
 import at.creadoo.homematic.util.Util;
 
@@ -108,4 +111,29 @@ public class HomeMaticPacketRemote extends HomeMaticPacket {
 		sb.append("counter=").append(counter);
 		return sb.toString();
 	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj instanceof HomeMaticPacket) {
+			final HomeMaticPacketRemote other = (HomeMaticPacketRemote) obj;
+			EqualsBuilder builder = new EqualsBuilder()
+				.appendSuper(super.equals(other))
+				.append(getChannel(), other.getChannel())
+				.append(getLongPress(), other.getLongPress())
+				.append(getCounter(), other.getCounter());
+			return builder.isEquals();
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(1, 31)
+			.appendSuper(super.hashCode())
+			.append(getChannel())
+			.append(getLongPress())
+			.append(getCounter())
+			.toHashCode();
+	}
+	
 }

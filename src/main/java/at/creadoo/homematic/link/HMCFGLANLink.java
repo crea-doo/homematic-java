@@ -388,6 +388,11 @@ public class HMCFGLANLink extends LinkBaseImpl implements MessageCallback {
     	}
     }
 
+	@Override
+	public void connectionTerminated() {
+		terminate();
+	}
+
     public void processData(final byte[] packet) {
     	final String[] parts = new String(packet).split(",");
         
@@ -468,7 +473,11 @@ public class HMCFGLANLink extends LinkBaseImpl implements MessageCallback {
 	        log.debug("Packet: " + homeMaticPacket);
 	        
 	        for (IHomeMaticLinkListener listener : getLinkListeners()) {
-	            listener.received(this, homeMaticPacket);
+	        	try {
+	        		listener.received(this, homeMaticPacket);
+				} catch (Throwable ex) {
+					//
+				}
 	        }
 		}
     }
@@ -569,11 +578,6 @@ public class HMCFGLANLink extends LinkBaseImpl implements MessageCallback {
 		}
     	return false;
     }
-
-	@Override
-	public void connectionTerminated() {
-		close();
-	}
     
     private String formatHexTime(final Long time) {
     	return Util.padLeft(Util.toHex(time), 8, "0");

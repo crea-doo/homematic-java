@@ -679,7 +679,11 @@ public class HMLGWLink extends LinkBaseImpl implements MessageCallback {
 	        //log.debug("Packet: " + homeMaticPacket);
 	        
 	        for (IHomeMaticLinkListener listener : getLinkListeners()) {
-	            listener.received(this, homeMaticPacket);
+	        	try {
+	        		listener.received(this, homeMaticPacket);
+				} catch (Throwable ex) {
+					//
+				}
 	        }
 		}
     }

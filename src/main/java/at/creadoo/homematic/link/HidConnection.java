@@ -98,7 +98,11 @@ public class HidConnection implements MessageCallback  {
         }
         
         for (IHomeMaticLinkListener listener : this.link.getLinkListeners()) {
-            listener.received(link, homeMaticPacket);
+        	try {
+	            listener.received(link, homeMaticPacket);
+			} catch (Throwable ex) {
+				//
+			}
         }
     }
 

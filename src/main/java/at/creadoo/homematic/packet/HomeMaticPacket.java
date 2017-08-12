@@ -15,6 +15,9 @@
  */
 package at.creadoo.homematic.packet;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import at.creadoo.homematic.HomeMaticMessageType;
 import at.creadoo.homematic.util.PacketUtil;
 import at.creadoo.homematic.util.Util;
@@ -225,6 +228,34 @@ public abstract class HomeMaticPacket {
 	 */
 	protected abstract void generatePayload();
 
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj instanceof HomeMaticPacket) {
+			final HomeMaticPacket other = (HomeMaticPacket) obj;
+			EqualsBuilder builder = new EqualsBuilder()
+				.append(getControlByte(), other.getControlByte())
+				.append(getDestinationAddress(), other.getDestinationAddress())
+				.append(getMessageCounter(), other.getMessageCounter())
+				.append(getMessageType(), other.getMessageType())
+				.append(getPacketLength(), other.getPacketLength())
+				.append(getSenderAddress(), other.getSenderAddress());
+			return builder.isEquals();
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(1, 31)
+			.append(getControlByte())
+			.append(getDestinationAddress())
+			.append(getMessageCounter())
+			.append(getMessageType())
+			.append(getPacketLength())
+			.append(getSenderAddress())
+			.toHashCode();
+	}
+	
 	/**
 	 * This method is called when a packet's contents is converted to a string
 	 * representation.

@@ -36,8 +36,8 @@ public class HMCFGUSBLinkTest {
 		*/
 		
 		final HMCFGUSBLink hardware = new HMCFGUSBLink();
-		hardware.setUsbProductId("0xC00F");
-		hardware.setUsbVendorId("0x1B1F");
+		hardware.setProductId("0xC00F");
+		hardware.setVendorId("0x1B1F");
 		
 		try {
 			hardware.start();

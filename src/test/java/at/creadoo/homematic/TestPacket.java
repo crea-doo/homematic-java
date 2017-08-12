@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017 crea-doo.at
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License. 
+ */
 package at.creadoo.homematic;
 
 import org.apache.log4j.Logger;
@@ -54,6 +69,22 @@ public class TestPacket {
 		log.debug("Packet: " + p);
 		
 		return p;
+	}
+
+	@Test
+	public void testPacketEquals() {
+		log.debug("testPacketEquals");
+
+		final HomeMaticPacketEvent p1 = (HomeMaticPacketEvent) packetFromString("45 31 e0 0f 00 00 00 44 0f 35 ff ff ba 0c 08 84 41 31 e0 0f 00 00 00 01 aa 00 0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00");
+		final HomeMaticPacketEvent p2 = (HomeMaticPacketEvent) packetFromString("45 31 e0 0f 00 00 00 44 0f 35 ff ff ba 0c 08 84 41 31 e0 0f 00 00 00 01 aa 00 0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00");
+		Assert.assertNotNull(p1);
+		Assert.assertNotNull(p2);
+		Assert.assertEquals(p1, p2);
+		
+		final HomeMaticPacketEvent p3 = (HomeMaticPacketEvent) packetFromString("45 31 e0 0f 00 00 00 44 1d db ff ff b8 0c 09 84 41 31 e0 0f 00 00 00 01 ab c8 0e 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00");
+		Assert.assertNotNull(p3);
+		Assert.assertNotEquals(p1, p3);
+		Assert.assertNotEquals(p2, p3);
 	}
 
 	@Test

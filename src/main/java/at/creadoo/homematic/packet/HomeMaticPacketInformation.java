@@ -15,6 +15,9 @@
  */
 package at.creadoo.homematic.packet;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import at.creadoo.homematic.HomeMaticError;
 import at.creadoo.homematic.HomeMaticMessageType;
 import at.creadoo.homematic.util.Util;
@@ -120,6 +123,30 @@ public class HomeMaticPacketInformation extends HomeMaticPacket {
 		sb.append("error=").append(error).append(", ");
 		sb.append("lowBat=").append(lowBat);
 		return sb.toString();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj instanceof HomeMaticPacket) {
+			final HomeMaticPacketInformation other = (HomeMaticPacketInformation) obj;
+			EqualsBuilder builder = new EqualsBuilder()
+				.appendSuper(super.equals(other))
+				.append(getStatus(), other.getStatus())
+				.append(getError(), other.getError())
+				.append(getLowBat(), other.getLowBat());
+			return builder.isEquals();
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(1, 31)
+			.appendSuper(super.hashCode())
+			.append(getStatus())
+			.append(getError())
+			.append(getLowBat())
+			.toHashCode();
 	}
 
 }

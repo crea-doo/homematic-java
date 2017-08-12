@@ -123,6 +123,34 @@ public abstract class LinkBaseImpl implements IHomeMaticLink {
 			
 			//Actually stop the link
 			closeLink();
+			
+			for (IHomeMaticLinkListener listener : getLinkListeners()) {
+				try {
+		            listener.linkClosed(this);
+				} catch (Throwable ex) {
+					//
+				}
+	        }
+		} else {
+			log.warn("Link '" + getName() + "' not running");
+		}
+	}
+	
+	protected void terminate() {
+		log.debug("Terminating link '" + getName() + "' ...");
+		if (listen.getAndSet(false)) {
+			cleanUpAES();
+			
+			//Actually stop the link
+			closeLink();
+			
+			for (IHomeMaticLinkListener listener : getLinkListeners()) {
+				try {
+					listener.linkTerminated(this);
+				} catch (Throwable ex) {
+					//
+				}
+	        }
 		} else {
 			log.warn("Link '" + getName() + "' not running");
 		}

@@ -15,6 +15,9 @@
  */
 package at.creadoo.homematic.packet;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import at.creadoo.homematic.HomeMaticMessageType;
 import at.creadoo.homematic.HomeMaticStatus;
 
@@ -78,6 +81,26 @@ public class HomeMaticPacketSet extends HomeMaticPacket {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("status=").append(status);
 		return sb.toString();
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj instanceof HomeMaticPacket) {
+			final HomeMaticPacketSet other = (HomeMaticPacketSet) obj;
+			EqualsBuilder builder = new EqualsBuilder()
+				.appendSuper(super.equals(other))
+				.append(getStatus(), other.getStatus());
+			return builder.isEquals();
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(1, 31)
+			.appendSuper(super.hashCode())
+			.append(getStatus())
+			.toHashCode();
 	}
 
 }
