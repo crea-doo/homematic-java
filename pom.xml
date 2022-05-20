@@ -33,7 +33,7 @@
 		<jna.version>4.2.2</jna.version>
 		<hid4java.version>0.4.0</hid4java.version>
 
-		<gson.version>2.8.1</gson.version>
+		<gson.version>2.8.9</gson.version>
 
 		<testng.version>6.10</testng.version>
 		<surefire.version>2.20</surefire.version>
