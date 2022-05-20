@@ -29,7 +29,7 @@
 		<commons.io.version>2.7</commons.io.version>
 		<commons.codec.version>1.10</commons.codec.version>
 		<commons.lang3.version>3.6</commons.lang3.version>
-		<bouncycastle.version>1.56</bouncycastle.version>
+		<bouncycastle.version>1.67</bouncycastle.version>
 		<jna.version>4.2.2</jna.version>
 		<hid4java.version>0.4.0</hid4java.version>
 
